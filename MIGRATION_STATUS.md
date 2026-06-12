@@ -1,10 +1,10 @@
 # 🚀 Rails Migration Status — GENTRADE Analytics
 
 **Created**: 2026-06-12
-**Status**: Phase 2 Complete (Core API Ready) 🎉
+**Status**: Phase 4 Complete (Background Jobs & Testing Ready) 🎉
 **Rails Version**: 8.0.5
 **Ruby Version**: 3.3.0
-**Progress**: 50% Complete
+**Progress**: 75% Complete
 
 ---
 
@@ -87,7 +87,7 @@
 ## 📊 Current Architecture
 
 ```
-Rails 8 API
+Rails 8 API (Clean Architecture)
 ├── Models (ActiveRecord)
 │   ├── User (Devise)
 │   ├── Client (with materials, proposals)
@@ -96,54 +96,85 @@ Rails 8 API
 │   ├── ProposalVersion
 │   └── ProposalMessage
 │
-├── Controllers (API/V1)
-│   └── ClientsController ✓
+├── Controllers (API/V1) — Thin Controllers
+│   ├── ClientsController ✓
+│   ├── MaterialsController ✓
+│   ├── ProposalsController ✓ (async with jobs)
+│   └── AuthController ✓
+│
+├── Services (Business Logic)
+│   ├── AI::OpenrouterClient — HTTP client for Claude
+│   ├── Proposals::Generator — AI proposal generation
+│   └── Proposals::Editor — AI chat-based editing
+│
+├── Jobs (Background Processing with Sidekiq)
+│   ├── ProposalGenerationJob — Async AI generation
+│   └── ProposalEditJob — Async AI editing
 │
 ├── Database
-│   └── PostgreSQL (port 5434)
+│   └── PostgreSQL 15 (port 5434)
 │
 └── Cache/Jobs
-    └── Redis (port 6380)
+    └── Redis 7 (port 6380)
 ```
 
 ---
 
-## 🎯 Next Steps (Pending)
+## 🎯 Migration Phases
 
-### ✅ Phase 2: Complete API Endpoints (COMPLETED)
+### ✅ Phase 1: Infrastructure Setup (COMPLETED)
+- ✓ Rails 8.0 API project created
+- ✓ PostgreSQL + Redis configured
+- ✓ Docker Compose setup
+- ✓ Database schema (User, Client, Material, Proposal models)
+- ✓ Basic auth with Devise + JWT
 
-All core API endpoints have been implemented and tested successfully:
-- ✓ Materials Controller (4 endpoints)
-- ✓ Proposals Controller (6 endpoints)
-- ✓ Authentication Controller (3 endpoints)
+### ✅ Phase 2: Core API Endpoints (COMPLETED)
+- ✓ ClientsController (5 endpoints)
+- ✓ MaterialsController (4 endpoints)
+- ✓ ProposalsController (6 endpoints)
+- ✓ AuthController (3 endpoints)
+- ✓ All CRUD operations tested and working
 
-### Phase 3: Business Logic (CURRENT)
+### ✅ Phase 3: AI Integration (COMPLETED)
+- ✓ OpenRouter client for Claude 3.5 Sonnet
+- ✓ `AI::OpenrouterClient` service
+- ✓ `Proposals::Generator` service (AI-powered generation)
+- ✓ `Proposals::Editor` service (chat-based editing)
+- ✓ Environment variables migrated
+- ✓ OAuth redirect URIs updated to port 3002
 
-1. **Services Layer**
-   - `Proposals::Generator` (AI generation)
-   - `Proposals::Editor` (AI chat editing)
-   - `Materials::Processor` (file handling)
+### ✅ Phase 4: Background Jobs & Testing (COMPLETED)
+- ✓ Sidekiq configured for background jobs
+- ✓ `ProposalGenerationJob` (async AI generation)
+- ✓ `ProposalEditJob` (async AI editing)
+- ✓ ProposalsController updated to use jobs
+- ✓ RSpec configured
+- ✓ Service tests written
+- ✓ Job tests written
+- ✓ Sidekiq Web UI mounted (development only)
 
-2. **Background Jobs**
-   - `GenerateProposalJob`
-   - `EditProposalJob`
+### Phase 5: Integrations & Frontend (NEXT)
 
-3. **AI Integration**
-   - OpenRouter client for Claude
-   - OpenAI client for Whisper (transcription)
+1. **OAuth Integrations**
+   - Google OAuth setup
+   - Meta OAuth setup
+   - Shopify OAuth setup
 
-### Phase 4: Advanced Features
-
-1. **Integrations**
-   - Google OAuth
+2. **Data Sync**
    - Google Analytics sync
    - Google Ads sync
    - Meta Ads sync
 
-2. **Analytics & Reporting**
-   - Dashboard data
+3. **Frontend Integration**
+   - Connect React frontend to Rails backend
+   - Test all API endpoints from UI
+   - Verify authentication flow
+
+4. **Analytics & Reporting**
+   - Dashboard data aggregation
    - Metrics calculation
-   - Slack reports
+   - Slack reports integration
 
 ---
 
@@ -187,6 +218,20 @@ rails c
 ```bash
 unset DATABASE_URL
 bundle exec rspec
+```
+
+### Start Sidekiq (Background Jobs)
+
+```bash
+# In a separate terminal
+cd backend
+bundle exec sidekiq
+
+# Or with config file
+bundle exec sidekiq -C config/sidekiq.yml
+
+# View Sidekiq Web UI (development only)
+# Visit: http://localhost:3002/sidekiq
 ```
 
 ### Check Routes
@@ -401,7 +446,7 @@ docker-compose down
 
 ## ✨ Success Metrics
 
-Current Progress: **~50% Complete** (Phase 2 Complete!)
+Current Progress: **~75% Complete** (Phase 4 Complete!)
 
 - [x] Project setup (100%)
 - [x] Database schema (100%)
@@ -410,12 +455,24 @@ Current Progress: **~50% Complete** (Phase 2 Complete!)
   - [x] Materials API (4 endpoints)
   - [x] Proposals API (6 endpoints)
 - [x] Authentication (100% - Login, logout, me endpoints)
-- [ ] AI Integration (0% - TODO: Replace dummy content generation)
-- [ ] Integrations (0% - TODO: Google Analytics, Ads, Meta)
-- [ ] Background Jobs (0% - TODO: Sidekiq setup)
+- [x] AI Integration (100% - OpenRouter/Claude fully integrated)
+  - [x] AI::OpenrouterClient service
+  - [x] Proposals::Generator service
+  - [x] Proposals::Editor service
+- [x] Background Jobs (100% - Sidekiq with async AI processing)
+  - [x] ProposalGenerationJob
+  - [x] ProposalEditJob
+- [x] Testing (50% - RSpec configured, service tests written)
+  - [x] RSpec setup
+  - [x] Service specs
+  - [x] Job specs
+  - [ ] Controller specs (TODO)
+  - [ ] Integration tests (TODO)
+- [ ] OAuth Integrations (0% - TODO: Google, Meta, Shopify)
+- [ ] Data Sync (0% - TODO: Analytics, Ads)
 - [ ] Frontend connection (0% - TODO: Test with React frontend)
 
 ---
 
-**Last Updated**: 2026-06-12 10:30 UTC
-**Next Session**: Phase 3 - AI Integration (OpenRouter/Claude)
+**Last Updated**: 2026-06-12 14:45 UTC
+**Next Session**: Phase 5 - Frontend Integration & OAuth Setup

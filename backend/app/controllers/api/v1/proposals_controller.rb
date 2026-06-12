@@ -34,23 +34,12 @@ module Api
           metadata: { material_ids: material_ids }
         )
 
-        # Generate proposal with AI
-        result = Proposals::Generator.new(client, materials).call
+        # Enqueue background job for AI generation
+        ProposalGenerationJob.perform_later(@proposal.id, client.id, material_ids)
 
-        if result[:success]
-          @proposal.versions.create!(
-            version_number: 1,
-            content: result[:content]
-          )
-          @proposal.update!(
-            status: :generated,
-            metadata: @proposal.metadata.merge(ai_usage: result[:usage])
-          )
-          render json: proposal_json_with_details(@proposal), status: :created
-        else
-          @proposal.update!(status: :draft)
-          render json: { error: "AI generation failed: #{result[:error]}" }, status: :unprocessable_entity
-        end
+        render json: proposal_json(@proposal).merge(
+          message: 'Proposal generation started. Check status for updates.'
+        ), status: :accepted
       rescue ActiveRecord::RecordNotFound => e
         render json: { error: e.message }, status: :not_found
       rescue StandardError => e
@@ -66,39 +55,15 @@ module Api
         end
 
         # Save user message
-        @proposal.messages.create!(role: 'user', content: message)
+        user_msg = @proposal.messages.create!(role: 'user', content: message)
 
-        # Edit proposal with AI
-        result = Proposals::Editor.new(@proposal, message).call
+        # Enqueue background job for AI editing
+        ProposalEditJob.perform_later(@proposal.id, user_msg.id, message)
 
-        if result[:success]
-          # Save assistant message
-          @proposal.messages.create!(role: 'assistant', content: "Propuesta actualizada")
-
-          # Create new version with edited content
-          current_version = @proposal.current_version
-          new_version_number = current_version ? current_version.version_number + 1 : 1
-
-          @proposal.versions.create!(
-            version_number: new_version_number,
-            content: result[:content]
-          )
-
-          # Update metadata with AI usage
-          @proposal.update!(
-            metadata: @proposal.metadata.merge(
-              last_ai_usage: result[:usage],
-              last_edited_at: Time.current
-            )
-          )
-
-          render json: {
-            proposal: proposal_json_with_details(@proposal),
-            message: "Propuesta actualizada según tu solicitud"
-          }
-        else
-          render json: { error: "AI editing failed: #{result[:error]}" }, status: :unprocessable_entity
-        end
+        render json: {
+          proposal: proposal_json(@proposal),
+          message: 'Processing your edit request. Check proposal for updates.'
+        }, status: :accepted
       rescue StandardError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end

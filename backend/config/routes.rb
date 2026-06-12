@@ -1,4 +1,9 @@
+require 'sidekiq/web'
+
 Rails.application.routes.draw do
+  # Sidekiq Web UI (development only)
+  mount Sidekiq::Web => '/sidekiq' if Rails.env.development?
+
   devise_for :users
 
   # API routes
