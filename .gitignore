@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+vendor/bundle/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+*.log
+tmp/
+log/
+
+# Database
+*.sqlite3
+*.sqlite3-journal
+*.sql
+postgres_data/
+redis_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backend specific
+backend/tmp/
+backend/log/
+backend/storage/
+backend/vendor/bundle/
+
+# Frontend specific
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

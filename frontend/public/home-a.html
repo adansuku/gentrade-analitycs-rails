@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GENTRADE - Asistente Comercial Inteligente basado en IA. Genera propuestas comerciales profesionales en segundos.">
+  <meta name="theme-color" content="#070b18">
+  <title>GENTRADE — Asistente Comercial Inteligente</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #070b18;
+      --bg-card: #0d1225;
+      --bg-card-hover: #111836;
+      --border: #1a2040;
+      --border-hover: #2a3560;
+      --text: #e8ecf4;
+      --text-secondary: #8892a8;
+      --text-muted: #4a5568;
+      --accent: #4f46e5;
+      --accent-light: #6366f1;
+      --accent-glow: rgba(79, 70, 229, 0.15);
+      --green: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ═══ NAV ═══ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(7, 11, 24, 0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--text); text-decoration: none;
+    }
+    .nav-brand svg { width: 32px; height: 32px; }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .nav-cta-outline {
+      color: var(--text); border: 1px solid var(--border);
+      background: transparent;
+    }
+    .nav-cta-outline:hover { border-color: var(--accent-light); color: var(--accent-light); }
+    .nav-links a.nav-cta-primary {
+      color: #ffffff !important; background: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .nav-links a.nav-cta-primary:hover { background: var(--accent-light); box-shadow: 0 0 24px var(--accent-glow); color: #ffffff !important; }
+
+    /* ═══ HERO ═══ */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      position: relative;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-content { max-width: 800px; position: relative; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 20px;
+      background: var(--accent-glow); border: 1px solid rgba(99, 102, 241, 0.2);
+      font-size: 0.8rem; font-weight: 600; color: var(--accent-light);
+      margin-bottom: 24px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      line-height: 1.1; margin-bottom: 24px;
+    }
+    .hero h1 span { color: var(--accent-light); }
+    .hero p {
+      font-size: 1.2rem; color: var(--text-secondary);
+      max-width: 600px; margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 32px; border-radius: 12px;
+      font-size: 1rem; font-weight: 600; text-decoration: none;
+      transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white; box-shadow: 0 4px 24px var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3); color: white; }
+    .btn-secondary {
+      background: var(--bg-card); color: var(--text); border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent-light); }
+    .hero-stats {
+      display: flex; justify-content: center; gap: 48px; margin-top: 64px;
+      padding-top: 48px; border-top: 1px solid var(--border);
+    }
+    .hero-stat strong {
+      display: block; font-size: 2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-light), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-stat span { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* ═══ SECTION ═══ */
+    section { padding: 100px 24px; max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--accent-light);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800; letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .section-desc {
+      font-size: 1.1rem; color: var(--text-secondary);
+      max-width: 600px; margin-bottom: 48px; line-height: 1.7;
+    }
+
+    /* ═══ FEATURES GRID ═══ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      transition: all 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; font-size: 1.4rem;
+    }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ═══ HOW IT WORKS ═══ */
+    .steps { display: flex; flex-direction: column; gap: 0; position: relative; }
+    .steps::before {
+      content: ''; position: absolute; left: 28px; top: 28px; bottom: 28px;
+      width: 2px; background: var(--border);
+    }
+    .step {
+      display: flex; gap: 24px; align-items: flex-start;
+      padding: 28px 0; position: relative;
+    }
+    .step-number {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 800; color: var(--accent-light);
+      flex-shrink: 0; z-index: 1;
+    }
+    .step-content h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+    .step-content p { color: var(--text-secondary); font-size: 0.95rem; }
+
+    /* ═══ AI SECTION ═══ */
+    .ai-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    .ai-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px;
+      transition: all 0.3s; text-align: center;
+    }
+    .ai-card:hover { border-color: var(--accent); box-shadow: 0 0 32px var(--accent-glow); }
+    .ai-card-icon { font-size: 2rem; margin-bottom: 12px; }
+    .ai-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .ai-card p { font-size: 0.8rem; color: var(--text-secondary); }
+
+    /* ═══ CTA SECTION ═══ */
+    .cta-section {
+      text-align: center;
+      background: linear-gradient(135deg, var(--bg-card), rgba(79, 70, 229, 0.08));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 80px 40px;
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 50% 50%, var(--accent-glow), transparent 60%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800; margin-bottom: 16px; position: relative;
+    }
+    .cta-section p {
+      font-size: 1.1rem; color: var(--text-secondary);
+      margin-bottom: 32px; position: relative;
+    }
+    .cta-section .btn { position: relative; }
+
+    /* ═══ FOOTER ═══ */
+    footer {
+      padding: 48px 24px 32px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer p { color: var(--text-muted); font-size: 0.85rem; }
+    footer a { color: var(--text-secondary); text-decoration: none; }
+    footer a:hover { color: var(--accent-light); }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 768px) {
+      nav { padding: 12px 16px; }
+      .nav-links { display: none; }
+      .hero-stats { flex-direction: column; gap: 24px; }
+      .steps::before { left: 20px; }
+      .step-number { width: 40px; height: 40px; font-size: 1rem; border-radius: 12px; }
+      section { padding: 60px 16px; }
+    }
+
+    /* ═══ PRICING ═══ */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 24px;
+      transition: all 0.3s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .pricing-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+    }
+    .pricing-card-featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 32px var(--accent-glow);
+    }
+    .pricing-card-featured:hover {
+      border-color: var(--accent-light);
+    }
+    .pricing-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      padding: 5px 18px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .pricing-trial-badge {
+      display: inline-block;
+      background: var(--green);
+      color: white;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .pricing-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .pricing-name-plus { color: #3b82f6; }
+    .pricing-name-premium { color: var(--accent-light); }
+    .pricing-name-ultra { color: #a855f7; }
+    .pricing-price {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      margin-bottom: 8px;
+    }
+    .pricing-amount {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      line-height: 1;
+    }
+    .pricing-period {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .pricing-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+    .pricing-features li {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding-left: 22px;
+      position: relative;
+      line-height: 1.4;
+    }
+    .pricing-features li::before {
+      content: '•';
+      position: absolute;
+      left: 6px;
+      color: var(--accent-light);
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+    .pricing-features li strong {
+      color: var(--text);
+    }
+    .pricing-feature-muted {
+      color: var(--text-muted) !important;
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+    .pricing-feature-muted::before {
+      content: '✕' !important;
+      color: var(--text-muted) !important;
+      font-size: 0.8em;
+    }
+    .pricing-feature-muted strong {
+      color: var(--text-muted) !important;
+      font-weight: 400;
+    }
+    .pricing-cta {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 12px 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      background: transparent;
+    }
+    .pricing-cta:hover {
+      border-color: var(--accent-light);
+      color: var(--accent-light);
+      background: var(--accent-glow);
+    }
+    .pricing-cta-plus {
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+    .pricing-cta-plus:hover {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: #60a5fa;
+      color: #60a5fa;
+    }
+    .pricing-cta-premium {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border-color: transparent;
+    }
+    .pricing-cta-premium:hover {
+      box-shadow: 0 4px 20px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 1024px) {
+      .pricing-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 380px;
+        margin: 0 auto;
+      }
+    }
+
+    /* ═══ VIDEO MODAL ═══ */
+    .video-modal {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    .video-modal-content {
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+      animation: popIn 0.3s ease;
+    }
+    .video-modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+    .video-modal-close:hover {
+      color: #fff;
+    }
+
+    /* ═══ CONTACT ═══ */
+    .contact-wrapper {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .contact-form {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-field {
+      margin-bottom: 16px;
+    }
+    .form-field label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .form-field input::placeholder,
+    .form-field textarea::placeholder {
+      color: var(--text-muted);
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-field select {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+    .form-field textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .contact-info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: border-color 0.3s;
+    }
+    .contact-info-card:hover {
+      border-color: var(--accent);
+    }
+    .contact-info-icon {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    .contact-info-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .contact-info-card p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .contact-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      .contact-info {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .contact-info-card {
+        flex: 1;
+        min-width: 140px;
+      }
+    }
+
+    /* ═══ POPUP ═══ */
+    .popup-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    .popup-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 40px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+    .popup-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+    }
+    .popup-card h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .popup-card p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .popup-sub {
+      font-size: 0.85rem !important;
+      color: var(--text-muted) !important;
+      margin-bottom: 20px !important;
+    }
+    .popup-sub a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+    .popup-sub a:hover {
+      text-decoration: underline;
+    }
+
+    /* ═══ ANIMATIONS ═══ */
+    .fade-in {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.6s, transform 0.6s;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in { opacity: 1; transform: none; transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-brand">
+      <img src="/logo-white.svg" alt="GENTRADE" style="height: 36px;" />
+    </a>
+    <div class="nav-links">
+      <a href="#" onclick="openVideoModal(); return false;">Demo</a>
+      <a href="#features">Funcionalidades</a>
+      <a href="#ia">Inteligencia Artificial</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#precios">Precios</a>
+      <a href="#contacto">Contacto</a>
+      <a href="#contacto" class="nav-cta nav-cta-primary">Solicitar demo</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <div class="hero-badge-dot"></div>
+        Impulsado por GPT-4o y Whisper
+      </div>
+      <h1>Tu equipo comercial<br>potenciado con <span>IA</span></h1>
+      <p>Sube materiales del cliente, graba llamadas, y genera propuestas comerciales profesionales en segundos. Analisis de sentimiento, busqueda semantica y recomendaciones inteligentes.</p>
+      <div class="hero-ctas">
+        <a href="#contacto" class="btn btn-primary">
+          Solicitar una demo
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <button onclick="openVideoModal()" class="btn btn-secondary" style="cursor: pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Ver demo
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <strong>30s</strong>
+          <span>Propuesta generada</span>
+        </div>
+        <div class="hero-stat">
+          <strong>6</strong>
+          <span>Motores de IA integrados</span>
+        </div>
+        <div class="hero-stat">
+          <strong>100%</strong>
+          <span>Autoalojado y GDPR</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEO MODAL -->
+  <div id="videoModal" class="video-modal" style="display: none;" onclick="closeVideoModal()">
+    <div class="video-modal-content" onclick="event.stopPropagation()">
+      <button class="video-modal-close" onclick="closeVideoModal()" aria-label="Cerrar">&times;</button>
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px;">
+        <iframe
+          id="videoIframe"
+          src=""
+          title="GENTRADE Demo"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="section-label">Funcionalidades</div>
+    <h2 class="section-title">Todo lo que necesitas para vender mas</h2>
+    <p class="section-desc">Un asistente comercial completo que automatiza las tareas repetitivas y te permite enfocarte en lo que importa: cerrar ventas.</p>
+
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon" style="background: var(--accent-glow); color: var(--accent-light);">&#x2728;</div>
+        <h3>Propuestas con IA</h3>
+        <p>Genera propuestas profesionales en 30 segundos a partir de emails, documentos, audios y notas del cliente. 5 plantillas especializadas.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon" style="background: rgba(139, 92, 246, 0.12); color: #a78bfa;">&#x1F399;</div>
+        <h3>Transcripcion de llamadas</h3>
+        <p>Graba o sube llamadas y Whisper las transcribe automaticamente. El texto se analiza y se usa para generar propuestas mas precisas.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon" style="background: var(--green-glow); color: var(--green);">&#x1F4CA;</div>
+        <h3>Analisis de sentimiento</h3>
+        <p>Detecta el tono emocional del cliente en cada comunicacion. Prioriza los clientes que necesitan atencion inmediata.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">&#x1F50D;</div>
+        <h3>Busqueda semantica</h3>
+        <p>Encuentra informacion por significado, no por texto exacto. Busca "cuanto quiere gastar" y encuentra materiales sobre presupuesto.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon" style="background: rgba(236, 72, 153, 0.12); color: #ec4899;">&#x1F4E6;</div>
+        <h3>Pipeline comercial</h3>
+        <p>Visualiza tu embudo de ventas en un tablero Kanban con drag & drop. Arrastra clientes entre etapas: nuevo, contactado, negociando, cerrado.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon" style="background: rgba(6, 182, 212, 0.12); color: #06b6d4;">&#x270F;</div>
+        <h3>Editor WYSIWYG</h3>
+        <p>Edita propuestas visualmente con formato rico. Pide cambios a la IA en lenguaje natural. Exporta a PDF con un click.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section id="ia">
+    <div class="section-label">Inteligencia Artificial</div>
+    <h2 class="section-title">6 motores de IA trabajando para ti</h2>
+    <p class="section-desc">Cada funcionalidad esta respaldada por un modelo especializado de OpenAI, optimizado para su tarea.</p>
+
+    <div class="ai-grid">
+      <div class="ai-card fade-in">
+        <div class="ai-card-icon">&#x1F4DD;</div>
+        <h3>GPT-4o</h3>
+        <p>Generacion de propuestas, edicion por chat y resumen ejecutivo</p>
+      </div>
+      <div class="ai-card fade-in">
+        <div class="ai-card-icon">&#x26A1;</div>
+        <h3>GPT-4o mini</h3>
+        <p>Sentimiento, recomendaciones y chat general</p>
+      </div>
+      <div class="ai-card fade-in">
+        <div class="ai-card-icon">&#x1F399;</div>
+        <h3>Whisper</h3>
+        <p>Transcripcion de audio en tiempo real</p>
+      </div>
+      <div class="ai-card fade-in">
+        <div class="ai-card-icon">&#x1F9E0;</div>
+        <h3>Embeddings</h3>
+        <p>Vectorizacion de materiales para busqueda semantica</p>
+      </div>
+      <div class="ai-card fade-in">
+        <div class="ai-card-icon">&#x1F50E;</div>
+        <h3>Qdrant</h3>
+        <p>Base de datos vectorial para RAG y busqueda por significado</p>
+      </div>
+      <div class="ai-card fade-in">
+        <div class="ai-card-icon">&#x1F4E7;</div>
+        <h3>NLP Avanzado</h3>
+        <p>Analisis emocional, keywords y priorizacion de clientes</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="section-label">Flujo de trabajo</div>
+    <h2 class="section-title">De materiales a propuesta en 4 pasos</h2>
+    <p class="section-desc">Sin configuracion compleja. Sube lo que tengas del cliente y la IA hace el resto.</p>
+
+    <div class="steps">
+      <div class="step fade-in">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Sube materiales</h3>
+          <p>Arrastra emails, documentos PDF, hojas de calculo, graba llamadas o pega notas de texto. Acepta cualquier formato.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>La IA procesa todo</h3>
+          <p>Transcribe audios, analiza sentimiento, genera embeddings y condensa la informacion. Ves el progreso en tiempo real.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Genera la propuesta</h3>
+          <p>Elige una plantilla (consultoria, marketing, desarrollo web...) y GPT-4o genera una propuesta profesional en 30 segundos.</p>
+        </div>
+      </div>
+      <div class="step fade-in">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>Edita, exporta y envia</h3>
+          <p>Refina con el editor WYSIWYG o pide cambios por chat. Exporta a PDF y envia por email directamente desde la app.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="precios">
+    <div class="section-label">Planes</div>
+    <h2 class="section-title">El plan que se adapta a tu equipo</h2>
+    <p class="section-desc">Sin permanencia. Cambia o cancela en cualquier momento.</p>
+
+    <div class="pricing-grid">
+      <!-- Freemium -->
+      <div class="pricing-card fade-in">
+        <h3 class="pricing-name">Freemium</h3>
+        <div class="pricing-price">
+          <span class="pricing-amount">0€</span>
+        </div>
+        <p class="pricing-desc">Tu entrada al mundo de la IA comercial.</p>
+        <ul class="pricing-features">
+          <li><strong>5 Creditos IA</strong> / mes</li>
+          <li><strong>1</strong> Usuario</li>
+          <li><strong>3</strong> Propuestas / mes</li>
+          <li>Exportar a <strong>PDF</strong></li>
+          <li><strong>1</strong> Plantilla</li>
+          <li class="pricing-feature-muted">Transcripcion de audio</li>
+          <li class="pricing-feature-muted">Analisis de sentimiento</li>
+          <li class="pricing-feature-muted">Pipeline comercial (Kanban)</li>
+          <li class="pricing-feature-muted">Busqueda semantica (RAG)</li>
+          <li class="pricing-feature-muted">Recomendaciones IA</li>
+          <li class="pricing-feature-muted">Google Drive</li>
+          <li class="pricing-feature-muted">Integraciones ERP</li>
+          <li class="pricing-feature-muted">API propia</li>
+          <li class="pricing-feature-muted">Soporte prioritario</li>
+          <li>Con <strong>marca de agua</strong></li>
+        </ul>
+        <a href="#contacto" class="pricing-cta">Empezar con Freemium</a>
+      </div>
+
+      <!-- Plus -->
+      <div class="pricing-card fade-in">
+        <h3 class="pricing-name pricing-name-plus">Plus</h3>
+        <div class="pricing-price">
+          <span class="pricing-amount">49€</span>
+          <span class="pricing-period">/mes</span>
+        </div>
+        <p class="pricing-desc">Para comerciales independientes.</p>
+        <ul class="pricing-features">
+          <li><strong>30 Creditos IA</strong> / mes</li>
+          <li>Hasta <strong>3 Comerciales</strong></li>
+          <li><strong>20</strong> Propuestas / mes</li>
+          <li>Exportar a <strong>PDF</strong></li>
+          <li><strong>5</strong> Plantillas</li>
+          <li>Transcripcion de <strong>audio</strong></li>
+          <li>Analisis de <strong>sentimiento</strong></li>
+          <li class="pricing-feature-muted">Pipeline comercial (Kanban)</li>
+          <li class="pricing-feature-muted">Busqueda semantica (RAG)</li>
+          <li class="pricing-feature-muted">Recomendaciones IA</li>
+          <li class="pricing-feature-muted">Google Drive</li>
+          <li class="pricing-feature-muted">Integraciones ERP</li>
+          <li class="pricing-feature-muted">API propia</li>
+          <li class="pricing-feature-muted">Soporte prioritario</li>
+          <li>Sin marca de agua</li>
+        </ul>
+        <a href="#contacto" class="pricing-cta pricing-cta-plus">Empezar con Plus</a>
+      </div>
+
+      <!-- Premium -->
+      <div class="pricing-card pricing-card-featured fade-in">
+        <div class="pricing-badge">Recomendado</div>
+        <h3 class="pricing-name pricing-name-premium">Premium</h3>
+        <div class="pricing-price">
+          <span class="pricing-amount">129€</span>
+          <span class="pricing-period">/mes</span>
+        </div>
+        <p class="pricing-desc">Gestion de equipo comercial completa.</p>
+        <ul class="pricing-features">
+          <li><strong>150 Creditos IA</strong> / mes</li>
+          <li>Hasta <strong>10 Comerciales</strong></li>
+          <li>Propuestas <strong>ilimitadas</strong></li>
+          <li>Exportar a <strong>PDF</strong></li>
+          <li><strong>5</strong> Plantillas + personalizadas</li>
+          <li>Transcripcion de <strong>audio</strong></li>
+          <li>Analisis de <strong>sentimiento</strong></li>
+          <li><strong>Pipeline</strong> comercial (Kanban)</li>
+          <li>Busqueda <strong>semantica</strong> (RAG)</li>
+          <li>Recomendaciones <strong>IA</strong></li>
+          <li><strong>Google Drive</strong></li>
+          <li class="pricing-feature-muted">Integraciones ERP</li>
+          <li class="pricing-feature-muted">API propia</li>
+          <li>Soporte por <strong>email</strong></li>
+          <li>Sin marca de agua</li>
+        </ul>
+        <a href="#contacto" class="pricing-cta pricing-cta-premium">Empezar con Premium</a>
+      </div>
+
+      <!-- Ultra -->
+      <div class="pricing-card fade-in">
+        <h3 class="pricing-name pricing-name-ultra">Ultra</h3>
+        <div class="pricing-price">
+          <span class="pricing-amount">299€</span>
+          <span class="pricing-period">/mes</span>
+        </div>
+        <p class="pricing-desc">Para agencias y grandes equipos.</p>
+        <ul class="pricing-features">
+          <li><strong>500 Creditos IA</strong> / mes</li>
+          <li>Hasta <strong>25 Comerciales</strong></li>
+          <li>Propuestas <strong>ilimitadas</strong></li>
+          <li>Exportar a <strong>PDF</strong></li>
+          <li><strong>5</strong> Plantillas + personalizadas</li>
+          <li>Transcripcion de <strong>audio</strong></li>
+          <li>Analisis de <strong>sentimiento</strong></li>
+          <li><strong>Pipeline</strong> comercial (Kanban)</li>
+          <li>Busqueda <strong>semantica</strong> (RAG)</li>
+          <li>Recomendaciones <strong>IA</strong></li>
+          <li><strong>Google Drive</strong></li>
+          <li>Integraciones <strong>ERP</strong> (Holded, Shopify)</li>
+          <li><strong>API</strong> propia</li>
+          <li>Soporte <strong>prioritario</strong></li>
+          <li>Sin marca de agua</li>
+        </ul>
+        <a href="#contacto" class="pricing-cta">Empezar con Ultra</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section>
+    <div class="cta-section fade-in">
+      <h2>Transforma tu proceso comercial</h2>
+      <p>Solicita una demo personalizada y descubre como GENTRADE puede ayudar a tu equipo.</p>
+      <a href="#contacto" class="btn btn-primary">
+        Solicitar demo
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section id="contacto">
+    <div class="section-label">Contacto</div>
+    <h2 class="section-title">Hablemos de tu proyecto</h2>
+    <p class="section-desc">Cuentanos que necesitas y te respondemos en menos de 24 horas.</p>
+
+    <div class="contact-wrapper">
+      <form class="contact-form fade-in" id="contactForm" onsubmit="handleContactSubmit(event)">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="contact-name">Nombre</label>
+            <input type="text" id="contact-name" name="name" placeholder="Tu nombre" required>
+          </div>
+          <div class="form-field">
+            <label for="contact-email">Email profesional</label>
+            <input type="email" id="contact-email" name="email" placeholder="tu@empresa.com" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="contact-company">Empresa</label>
+            <input type="text" id="contact-company" name="company" placeholder="Nombre de tu empresa">
+          </div>
+          <div class="form-field">
+            <label for="contact-phone">Telefono</label>
+            <input type="tel" id="contact-phone" name="phone" placeholder="+34 600 000 000">
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="contact-subject">Asunto</label>
+          <select id="contact-subject" name="subject">
+            <option value="demo">Solicitar una demo</option>
+            <option value="pricing">Informacion de precios</option>
+            <option value="integration">Integracion con mi sistema</option>
+            <option value="other">Otro</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="contact-message">Mensaje</label>
+          <textarea id="contact-message" name="message" rows="4" placeholder="Cuentanos en que podemos ayudarte..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="contactBtn" style="width: 100%;">
+          Enviar mensaje
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+        <div id="contactError" style="display: none; text-align: center; padding: 16px; color: #ef4444; font-weight: 600; margin-top: 12px;">
+          Error al enviar. Intentalo de nuevo o escribenos a ai@2bedigital.com
+        </div>
+      </form>
+
+      <div class="contact-info fade-in">
+        <div class="contact-info-card">
+          <div class="contact-info-icon">&#x1F4E7;</div>
+          <h3>Email</h3>
+          <p>info@2bedigital.com</p>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-info-icon">&#x1F4CD;</div>
+          <h3>Ubicacion</h3>
+          <p>Espana</p>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-info-icon">&#x26A1;</div>
+          <h3>Respuesta</h3>
+          <p>Menos de 24 horas</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUCCESS POPUP -->
+  <div id="successPopup" class="popup-overlay" style="display: none;">
+    <div class="popup-card">
+      <div class="popup-icon">&#x2705;</div>
+      <h2>Gracias por contactarnos</h2>
+      <p>Hemos recibido tu mensaje correctamente. Nuestro equipo lo revisara y te responderemos en menos de 24 horas.</p>
+      <p class="popup-sub">Si necesitas algo urgente, escribenos directamente a <a href="mailto:ai@2bedigital.com">ai@2bedigital.com</a></p>
+      <button class="btn btn-primary" onclick="closePopup()" style="width: 100%; margin-top: 8px;">Entendido</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2026 GENTRADE by <a href="https://2bedigital.com">2begroup&partners</a>. Asistente Comercial Inteligente basado en IA Generativa.</p>
+  </footer>
+
+  <!-- Scroll animations -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    function openVideoModal() {
+      document.getElementById('videoIframe').src = 'https://www.youtube.com/embed/tJguRdJun7o?autoplay=1';
+      document.getElementById('videoModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeVideoModal() {
+      document.getElementById('videoIframe').src = '';
+      document.getElementById('videoModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeVideoModal();
+    });
+
+    function handleContactSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('contactBtn');
+      const error = document.getElementById('contactError');
+      const form = document.getElementById('contactForm');
+
+      btn.disabled = true;
+      btn.innerHTML = 'Enviando...';
+      error.style.display = 'none';
+
+      const data = {
+        name: form.querySelector('[name=name]').value,
+        email: form.querySelector('[name=email]').value,
+        company: form.querySelector('[name=company]').value,
+        phone: form.querySelector('[name=phone]').value,
+        subject: form.querySelector('[name=subject]').value,
+        message: form.querySelector('[name=message]').value,
+      };
+
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+        .then(r => {
+          if (!r.ok) throw new Error('Error');
+          form.reset();
+          document.getElementById('successPopup').style.display = 'flex';
+        })
+        .catch(() => {
+          error.style.display = 'block';
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerHTML = 'Enviar mensaje <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+        });
+    }
+
+    function closePopup() {
+      document.getElementById('successPopup').style.display = 'none';
+    }
+  </script>
+
+</body>
+</html>

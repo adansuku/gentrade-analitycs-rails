@@ -1,0 +1,91 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: gentrade-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gentrade_rails_development
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gentrade-network
+
+  # Redis Cache & Jobs
+  redis:
+    image: redis:7-alpine
+    container_name: gentrade-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gentrade-network
+
+  # Rails Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gentrade-backend
+    command: bash -c "bundle install && rails db:migrate && rails s -b 0.0.0.0 -p 3002"
+    volumes:
+      - ./backend:/app
+      - backend_gems:/usr/local/bundle
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gentrade_rails_development
+      - REDIS_URL=redis://redis:6379/0
+      - FRONTEND_URL=http://localhost:5173
+      - RAILS_ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gentrade-network
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gentrade-frontend
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - BACKEND_URL=http://backend:3002
+      - VITE_APP_NAME=GENTRADE
+      - VITE_APP_TAGLINE=Asistente Comercial Inteligente
+    depends_on:
+      - backend
+    networks:
+      - gentrade-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_gems:
+
+networks:
+  gentrade-network:
+    driver: bridge
