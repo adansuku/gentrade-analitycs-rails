@@ -14,7 +14,7 @@ export function AppProvider({ children }) {
 
   const fetchClients = async () => {
     try {
-      const response = await authFetch(`${API_BASE}/api/clients`);
+      const response = await authFetch(`${API_BASE}/api/v1/clients`);
       const data = await response.json();
       setClients(data.clients || []);
     } catch (error) {
@@ -24,7 +24,7 @@ export function AppProvider({ children }) {
 
   const fetchDashboard = async () => {
     try {
-      const r = await authFetch(`${API_BASE}/api/insights/dashboard`);
+      const r = await authFetch(`${API_BASE}/api/v1/insights/dashboard`);
       const data = await r.json();
       setDashboardData(data);
     } catch { /* Dashboard data optional */ }

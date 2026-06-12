@@ -13,7 +13,7 @@ module Api
         client = Client.find(params[:client_id])
         @proposals = client.proposals.order(created_at: :desc)
 
-        render json: @proposals.map { |proposal| proposal_json(proposal) }
+        render json: { proposals: @proposals.map { |proposal| proposal_json(proposal) } }
       end
 
       # POST /api/v1/clients/:client_id/proposals/generate
@@ -37,9 +37,10 @@ module Api
         # Enqueue background job for AI generation
         ProposalGenerationJob.perform_later(@proposal.id, client.id, material_ids)
 
-        render json: proposal_json(@proposal).merge(
+        render json: {
+          proposal: proposal_json(@proposal),
           message: 'Proposal generation started. Check status for updates.'
-        ), status: :accepted
+        }, status: :accepted
       rescue ActiveRecord::RecordNotFound => e
         render json: { error: e.message }, status: :not_found
       rescue StandardError => e
@@ -96,15 +97,23 @@ module Api
       end
 
       def proposal_json(proposal)
+        client = proposal.client
         {
           id: proposal.id,
           client_id: proposal.client_id,
+          clientId: proposal.client_id,
           title: proposal.title,
           status: proposal.status,
           metadata: proposal.metadata,
           version_count: proposal.versions.count,
           created_at: proposal.created_at.iso8601,
-          updated_at: proposal.updated_at.iso8601
+          updated_at: proposal.updated_at.iso8601,
+          client: {
+            id: client.id,
+            name: client.name,
+            email: client.email,
+            company: client.description
+          }
         }
       end
 

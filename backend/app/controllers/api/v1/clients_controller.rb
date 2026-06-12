@@ -52,7 +52,11 @@ module Api
       end
 
       def client_params
-        params.require(:client).permit(:name, :email, :industry, :description, metadata: {})
+        if params.key?(:client)
+          params.require(:client).permit(:name, :email, :industry, :description, metadata: {})
+        else
+          params.permit(:name, :email, :industry, :description, :phone, :company, :notes)
+        end
       end
 
       def client_json(client)

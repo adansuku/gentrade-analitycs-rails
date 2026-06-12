@@ -22,7 +22,7 @@ function ClientDetailRoute({
 
   useEffect(() => {
     if (!isCurrentClient) {
-      authFetch(`${API_BASE}/api/clients/${id}`)
+      authFetch(`${API_BASE}/api/v1/clients/${id}`)
         .then(r => r.json())
         .then(client => {
           if (client?.id) {

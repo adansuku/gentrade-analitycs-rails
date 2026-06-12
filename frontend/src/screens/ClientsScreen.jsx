@@ -17,7 +17,7 @@ export function ClientsScreen({ onOpenClient, initialEditClient, onEditCleared, 
   const fetchClients = async () => {
     try {
       const params = search ? `?search=${encodeURIComponent(search)}` : '';
-      const response = await authFetch(`${API_BASE}/api/clients${params}`);
+      const response = await authFetch(`${API_BASE}/api/v1/clients${params}`);
       const data = await response.json();
       setClients(data.clients || []);
     } catch (error) {
@@ -54,7 +54,7 @@ export function ClientsScreen({ onOpenClient, initialEditClient, onEditCleared, 
   const handleSaveClient = async () => {
     if (!formData.name.trim()) return;
     try {
-      const url = editingClient ? `${API_BASE}/api/clients/${editingClient.id}` : `${API_BASE}/api/clients`;
+      const url = editingClient ? `${API_BASE}/api/v1/clients/${editingClient.id}` : `${API_BASE}/api/v1/clients`;
       const method = editingClient ? 'PUT' : 'POST';
       const response = await authFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       if (response.ok) { setShowModal(false); fetchClients(); }
@@ -64,7 +64,7 @@ export function ClientsScreen({ onOpenClient, initialEditClient, onEditCleared, 
   const handleDeleteClient = async (clientId) => {
     if (!confirm('Seguro que quieres borrar este cliente?')) return;
     try {
-      const response = await authFetch(`${API_BASE}/api/clients/${clientId}`, { method: 'DELETE' });
+      const response = await authFetch(`${API_BASE}/api/v1/clients/${clientId}`, { method: 'DELETE' });
       if (response.ok) fetchClients();
     } catch (error) { console.error('Error deleting client:', error); }
   };

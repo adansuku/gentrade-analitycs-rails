@@ -8,7 +8,7 @@ module Api
       def index
         @materials = @client.materials.order(created_at: :desc)
 
-        render json: @materials.map { |material| material_json(material) }
+        render json: { materials: @materials.map { |material| material_json(material) } }
       end
 
       # POST /api/v1/clients/:client_id/materials
@@ -42,7 +42,7 @@ module Api
           }
         )
 
-        render json: material_json(@material), status: :created
+        render json: { material: material_json(@material) }, status: :created
       rescue StandardError => e
         render json: { error: e.message }, status: :unprocessable_entity
       end

@@ -4,6 +4,19 @@ import { authFetch } from '../lib/api';
 
 const API_BASE = '';
 
+async function pollProposal(proposalId, predicate, interval = 2000, timeout = 120000) {
+  const start = Date.now();
+  const poll = async () => {
+    if (Date.now() - start > timeout) throw new Error('Timeout waiting for proposal');
+    const res = await authFetch(`${API_BASE}/api/v1/proposals/${proposalId}`);
+    const data = await res.json();
+    if (predicate(data)) return data;
+    await new Promise(r => setTimeout(r, interval));
+    return poll();
+  };
+  return poll();
+}
+
 export default function useProposalFlow({ selectedClient, loadProposals }) {
   const navigate = useNavigate();
   const [processingStage, setProcessingStage] = useState('generating');
@@ -36,88 +49,42 @@ export default function useProposalFlow({ selectedClient, loadProposals }) {
     setGenerating(true);
 
     const body = { tone: 'profesional', template };
-    if (options.includeIntegrations && options.includeIntegrations.length > 0) {
-      body.includeIntegrations = options.includeIntegrations;
-    }
     if (options.customSections?.trim()) {
       body.customSections = options.customSections.trim();
     }
-    if (Array.isArray(options.materialIds) && options.materialIds.length > 0 && options.materialIds.length < (options.totalMaterials ?? Infinity)) {
-      body.materialIds = options.materialIds;
+    if (Array.isArray(options.materialIds) && options.materialIds.length > 0) {
+      body.material_ids = options.materialIds;
     }
 
     try {
-      const response = await authFetch(`${API_BASE}/api/clients/${selectedClient.id}/proposals/generate`, {
+      const response = await authFetch(`${API_BASE}/api/v1/clients/${selectedClient.id}/proposals/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
-      if (response.headers.get('content-type')?.includes('text/event-stream')) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
+      if (response.status === 202) {
+        const data = await response.json();
+        const proposalId = data.proposal.id;
+        setProgressSteps([{ step: 'generating', message: 'Generando propuesta con IA...' }]);
+        setProcessingStage('generating');
 
-        const processSseChunk = (chunk) => {
-          if (!chunk.trim()) return;
+        const proposalData = await pollProposal(
+          proposalId,
+          (p) => p.status === 'generated' || p.status === 'draft'
+        );
 
-          let event = '';
-          const dataLines = [];
-          for (const line of chunk.split(/\r?\n/)) {
-            if (line.startsWith('event:')) {
-              event = line.slice('event:'.length).trim();
-            } else if (line.startsWith('data:')) {
-              dataLines.push(line.slice('data:'.length).replace(/^\s*/, ''));
-            }
-          }
-
-          const dataStr = dataLines.join('\n');
-          if (!dataStr) return;
-
-          const data = JSON.parse(dataStr);
-          const kind = event || data.event || data.type;
-
-          if (kind === 'progress' || data.step) {
-            setProgressSteps(prev => [...prev, data]);
-            if (data.step) setProcessingStage(data.step);
-            return;
-          }
-
-          if (kind === 'complete' || (data.content && (data.proposalId || data.proposalSlug))) {
-            applyComplete(data);
-            return;
-          }
-
-          if (kind === 'error' || data.error) {
-            throw new Error(data.message || data.error || 'Error al generar la propuesta');
-          }
-        };
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          // Parse SSE: split on double newline (event boundary)
-          const parts = buffer.split(/\r?\n\r?\n/);
-          buffer = parts.pop() || '';
-
-          for (const part of parts) {
-            processSseChunk(part);
-          }
-        }
-
-        // Flush any trailing event if present.
-        if (buffer.trim()) {
-          processSseChunk(buffer);
+        if (proposalData.status === 'generated') {
+          applyComplete({
+            content: proposalData.current_version?.content || '',
+            proposalId: proposalData.id,
+          });
+        } else {
+          throw new Error(proposalData.metadata?.error || 'Error al generar la propuesta');
         }
       } else {
         const data = await response.json();
-        if (data.content) {
-          applyComplete(data);
-        } else {
-          throw new Error('No se recibio contenido');
-        }
+        throw new Error(data.error || 'Error al generar la propuesta');
       }
     } catch (error) {
       console.error('Error generating proposal:', error);
@@ -131,27 +98,61 @@ export default function useProposalFlow({ selectedClient, loadProposals }) {
     if (!currentProposalId) return;
     setSending(true);
     try {
-      const response = await authFetch(`${API_BASE}/api/proposals/${currentProposalId}/chat`, {
+      const response = await authFetch(`${API_BASE}/api/v1/proposals/${currentProposalId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message }),
       });
-      const data = await response.json();
 
-      if (data.content) {
-        setCurrentProposal(data.content);
-        // Update versions list with new version
-        if (data.version) {
-          setProposalVersions(prev => [
-            { version: data.version, content: data.content, id: `v${data.version}` },
-            ...prev,
-          ]);
-        }
+      if (response.status === 202) {
         setChatMessages(prev => [
           ...prev,
           { role: 'user', content: message },
-          { role: 'assistant', content: `Propuesta actualizada (version ${data.version || 'nueva'}).`, fullContent: data.content },
+          { role: 'assistant', content: 'Editando propuesta...' },
         ]);
+
+        const prevVersions = await pollProposal(currentProposalId, () => true);
+        const prevCount = prevVersions.version_count || 0;
+
+        const proposalData = await pollProposal(
+          currentProposalId,
+          (p) => (p.version_count || 0) > prevCount
+        );
+
+        setCurrentProposal(proposalData.current_version?.content || '');
+        setChatMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: 'assistant',
+            content: `Propuesta actualizada (versión ${proposalData.version_count})`,
+            fullContent: proposalData.current_version?.content,
+          };
+          return updated;
+        });
+        setProposalVersions(prev => [
+          {
+            version: proposalData.version_count,
+            content: proposalData.current_version?.content,
+            id: `v${proposalData.version_count}`,
+          },
+          ...prev,
+        ]);
+      } else {
+        const data = await response.json();
+        if (data.content) {
+          setCurrentProposal(data.content);
+          if (data.version) {
+            setProposalVersions(prev => [
+              { version: data.version, content: data.content, id: `v${data.version}` },
+              ...prev,
+            ]);
+          }
+          setChatMessages(prev => [
+            ...prev,
+            { role: 'user', content: message },
+            { role: 'assistant', content: `Propuesta actualizada (version ${data.version || 'nueva'}).`, fullContent: data.content },
+          ]);
+        }
       }
     } catch (error) {
       console.error('Error applying chat:', error);
@@ -166,10 +167,10 @@ export default function useProposalFlow({ selectedClient, loadProposals }) {
       return;
     }
     try {
-      await authFetch(`${API_BASE}/api/proposals/${proposal.id}`, {
+      await authFetch(`${API_BASE}/api/v1/proposals/${proposal.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'FINAL' }),
+        body: JSON.stringify({ status: 'reviewed' }),
       });
     } catch (error) {
       console.error('Error saving proposal:', error);
@@ -185,7 +186,7 @@ export default function useProposalFlow({ selectedClient, loadProposals }) {
   const handleDeleteProposal = async (proposalId) => {
     if (!confirm('Seguro que quieres eliminar esta propuesta?')) return;
     try {
-      const response = await authFetch(`${API_BASE}/api/proposals/${proposalId}`, { method: 'DELETE' });
+      const response = await authFetch(`${API_BASE}/api/v1/proposals/${proposalId}`, { method: 'DELETE' });
       if (response.ok && selectedClient) {
         loadProposals(selectedClient.id);
       }
@@ -196,7 +197,7 @@ export default function useProposalFlow({ selectedClient, loadProposals }) {
 
   const handleChangeProposalStatus = async (proposalId, newStatus) => {
     try {
-      await authFetch(`${API_BASE}/api/proposals/${proposalId}`, {
+      await authFetch(`${API_BASE}/api/v1/proposals/${proposalId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),

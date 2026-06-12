@@ -27,7 +27,7 @@ function ProposalRoute({
     }
     // Always fetch the proposal from the API to ensure we have the latest data
     setLoading(true);
-    authFetch(`${API_BASE}/api/proposals/${id}`)
+    authFetch(`${API_BASE}/api/v1/proposals/${id}`)
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
