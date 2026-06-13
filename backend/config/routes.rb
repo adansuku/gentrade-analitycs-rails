@@ -6,6 +6,16 @@ Rails.application.routes.draw do
 
   devise_for :users
 
+  # Root path - will be the dashboard later
+  # For now, redirect to login if not authenticated
+  authenticated :user do
+    root to: 'dashboard#index', as: :authenticated_root
+  end
+  root to: redirect('/users/sign_in')
+
+  # Web routes (HTML views)
+  resources :clients
+
   # API routes
   namespace :api do
     # Auth endpoints (outside v1 for compatibility with frontend)
