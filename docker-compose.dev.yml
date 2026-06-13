@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: gentrade-rails
+    command: >
+      bash -c "
+        bundle check --gemfile=/app/Gemfile > /dev/null 2>&1 || bundle install &&
+        bundle exec rails db:migrate &&
+        (bundle exec rails tailwindcss:watch &) &&
+        bundle exec rails s -b 0.0.0.0 -p 3002
+      "
+    volumes:
+      - ./backend:/app
+      - backend_gems:/usr/local/bundle
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gentrade_rails_development
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=materials
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - RAILS_ENV=development
+      - RAILS_LOG_LEVEL=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks:
+      - gentrade-network
+
+volumes:
+  backend_gems:
