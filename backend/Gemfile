@@ -7,6 +7,14 @@ gem "rails", "~> 8.0"
 gem "pg", "~> 1.5"
 gem "puma", ">= 6.0"
 
+# Frontend
+gem "tailwindcss-rails"
+gem "view_component"
+gem "stimulus-rails"
+gem "turbo-rails"
+gem "importmap-rails"
+gem "propshaft"
+
 # Background Jobs
 gem "connection_pool", "~> 2.4"
 gem "redis", "~> 5.0"
@@ -20,6 +28,7 @@ gem "rack-attack"
 gem "devise"
 gem "devise-jwt"
 gem "jwt"  # For OAuth state tokens
+gem "pundit"  # Authorization & Roles
 
 # Integrations
 gem "google-apis-analyticsdata_v1beta"

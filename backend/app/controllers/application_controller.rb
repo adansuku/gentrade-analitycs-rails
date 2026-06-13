@@ -1,38 +1,20 @@
 # app/controllers/application_controller.rb
-class ApplicationController < ActionController::API
+# Base controller for web views (HTML responses)
+class ApplicationController < ActionController::Base
+  # CSRF protection for forms (skip for JSON API requests)
+  protect_from_forgery with: :exception, unless: -> { request.format.json? }
+
+  # Devise authentication will be added here
+  # before_action :authenticate_user!
+
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
-  rescue_from ActionController::ParameterMissing, with: :bad_request
 
   private
 
-  def current_user
-    @current_user ||= authenticate_user
-  end
-
-  def authenticate_user
-    header = request.headers['Authorization']
-    return nil unless header
-
-    token = header.split(' ').last
-    decoded = JWT.decode(token, jwt_secret, true, algorithm: 'HS256')
-    User.find(decoded[0]['user_id'])
-  rescue JWT::DecodeError, ActiveRecord::RecordNotFound
-    nil
-  end
-
-  def authenticate_user!
-    render json: { error: 'Unauthorized' }, status: :unauthorized unless current_user
-  end
-
-  def jwt_secret
-    ENV.fetch('JWT_SECRET', 'your-secret-key')
-  end
-
-  def not_found(exception)
-    render json: { error: exception.message }, status: :not_found
-  end
-
-  def bad_request(exception)
-    render json: { error: exception.message }, status: :bad_request
+  def not_found
+    respond_to do |format|
+      format.html { render file: "#{Rails.root}/public/404.html", status: :not_found, layout: false }
+      format.json { render json: { error: 'Not found' }, status: :not_found }
+    end
   end
 end

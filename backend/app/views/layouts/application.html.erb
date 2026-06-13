@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f7f4ef" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#111210" media="(prefers-color-scheme: dark)">
+
+    <title><%= content_for(:title) || "GENTRADE — Asistente Comercial" %></title>
+    <meta name="description" content="GENTRADE Analytics - Asistente comercial inteligente">
+
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%# Tailwind CSS %>
+    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
+    <%# Hotwire: Turbo + Stimulus %>
+    <%= javascript_importmap_tags %>
+
+    <%# Google Fonts %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <%= yield :head %>
+  </head>
+
+  <body class="bg-secondary text-primary antialiased">
+    <%# Flash messages %>
+    <% if notice.present? %>
+      <div data-controller="flash" data-flash-type="notice" class="fixed top-4 right-4 z-50">
+        <div class="bg-white border-l-4 border-accent-success rounded-lg shadow-lg p-4 max-w-md">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-accent-success mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <p class="text-sm font-medium text-primary"><%= notice %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if alert.present? %>
+      <div data-controller="flash" data-flash-type="alert" class="fixed top-4 right-4 z-50">
+        <div class="bg-white border-l-4 border-accent-error rounded-lg shadow-lg p-4 max-w-md">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-accent-error mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <p class="text-sm font-medium text-primary"><%= alert %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <%= yield %>
+  </body>
+</html>
