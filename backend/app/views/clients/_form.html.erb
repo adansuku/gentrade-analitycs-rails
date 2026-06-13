@@ -1,0 +1,110 @@
+<%# Modal Form - Shared between new and edit %>
+<div
+  style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px;"
+  data-controller="modal"
+  data-action="click->modal#close keydown->modal#close"
+>
+  <div
+    data-action="click->modal#preventClose"
+    style="background: #fff; border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 24px 48px rgba(0,0,0,0.15); overflow: hidden;"
+  >
+    <%# Modal Header %>
+    <div style="padding: 20px 24px; border-bottom: 1px solid #f0f1f5; display: flex; align-items: center; justify-content: space-between;">
+      <h2 style="font-size: 1.125rem; font-weight: 600;">
+        <%= client.persisted? ? 'Editar cliente' : 'Nuevo cliente' %>
+      </h2>
+      <%= link_to clients_path, data: { turbo_frame: "modal" }, style: "width: 32px; height: 32px; border-radius: 8px; border: none; background: #f0f1f5; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; text-decoration: none;" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      <% end %>
+    </div>
+
+    <%# Modal Body %>
+    <%= form_with model: client, data: { turbo_frame: "_top" }, style: "display: flex; flex-direction: column;" do |f| %>
+      <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+        <%# Name Field %>
+        <div>
+          <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 6px; color: #374151;">
+            Nombre <span style="color: #ef4444;">*</span>
+          </label>
+          <%= f.text_field :name,
+            placeholder: "Nombre del cliente",
+            autofocus: true,
+            required: true,
+            class: "client-input",
+            style: "width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 0.875rem; background: #f8f9fb; color: #111827; outline: none; transition: border-color 0.15s;",
+            onfocus: "this.style.borderColor='#1b5e3b'",
+            onblur: "this.style.borderColor='#e5e7eb'" %>
+        </div>
+
+        <%# Email and Phone - Two Columns %>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 6px; color: #374151;">Email</label>
+            <%= f.email_field :email,
+              placeholder: "email@ejemplo.com",
+              class: "client-input",
+              style: "width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 0.875rem; background: #f8f9fb; color: #111827; outline: none; transition: border-color 0.15s;",
+              onfocus: "this.style.borderColor='#1b5e3b'",
+              onblur: "this.style.borderColor='#e5e7eb'" %>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 6px; color: #374151;">Teléfono</label>
+            <%= f.telephone_field :phone,
+              placeholder: "+34 600 000 000",
+              class: "client-input",
+              style: "width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 0.875rem; background: #f8f9fb; color: #111827; outline: none; transition: border-color 0.15s;",
+              onfocus: "this.style.borderColor='#1b5e3b'",
+              onblur: "this.style.borderColor='#e5e7eb'" %>
+          </div>
+        </div>
+
+        <%# Company and Industry - Two Columns %>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 6px; color: #374151;">Empresa</label>
+            <%= f.text_field :company,
+              placeholder: "Nombre de empresa",
+              class: "client-input",
+              style: "width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 0.875rem; background: #f8f9fb; color: #111827; outline: none; transition: border-color 0.15s;",
+              onfocus: "this.style.borderColor='#1b5e3b'",
+              onblur: "this.style.borderColor='#e5e7eb'" %>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 6px; color: #374151;">Sector</label>
+            <%= f.text_field :industry,
+              placeholder: "Ej. tecnología",
+              class: "client-input",
+              style: "width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 0.875rem; background: #f8f9fb; color: #111827; outline: none; transition: border-color 0.15s;",
+              onfocus: "this.style.borderColor='#1b5e3b'",
+              onblur: "this.style.borderColor='#e5e7eb'" %>
+          </div>
+        </div>
+
+        <%# Notes Field %>
+        <div>
+          <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 6px; color: #374151;">Notas</label>
+          <%= f.text_area :notes,
+            placeholder: "Notas adicionales...",
+            rows: 3,
+            class: "client-input",
+            style: "width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 0.875rem; background: #f8f9fb; color: #111827; outline: none; transition: border-color 0.15s; resize: vertical; min-height: 80px;",
+            onfocus: "this.style.borderColor='#1b5e3b'",
+            onblur: "this.style.borderColor='#e5e7eb'" %>
+        </div>
+      </div>
+
+      <%# Modal Footer %>
+      <div style="padding: 16px 24px; border-top: 1px solid #f0f1f5; display: flex; justify-content: flex-end; gap: 10px;">
+        <%= link_to "Cancelar", clients_path,
+          data: { turbo_frame: "modal" },
+          class: "px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors",
+          style: "text-decoration: none; display: inline-flex; align-items: center;" %>
+        <%= f.submit client.persisted? ? 'Guardar cambios' : 'Crear cliente',
+          class: "inline-flex items-center gap-2 px-4 py-2 bg-[#1b5e3b] text-white rounded-lg text-sm font-semibold hover:bg-[#2a7d54] transition-colors",
+          style: "border: none; cursor: pointer;" %>
+      </div>
+    <% end %>
+  </div>
+</div>

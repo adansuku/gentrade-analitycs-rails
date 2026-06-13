@@ -13,8 +13,7 @@
     <%= csp_meta_tag %>
 
     <%# Tailwind CSS %>
-    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
 
     <%# Hotwire: Turbo + Stimulus %>
     <%= javascript_importmap_tags %>
@@ -28,7 +27,10 @@
   </head>
 
   <body class="bg-secondary text-primary antialiased">
-    <%# Flash messages %>
+    <%# Flash messages container for Turbo Stream %>
+    <div id="flash" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <%# Flash messages (initial page load) %>
     <% if notice.present? %>
       <div data-controller="flash" data-flash-type="notice" class="fixed top-4 right-4 z-50">
         <div class="bg-white border-l-4 border-accent-success rounded-lg shadow-lg p-4 max-w-md">
@@ -44,17 +46,25 @@
 
     <% if alert.present? %>
       <div data-controller="flash" data-flash-type="alert" class="fixed top-4 right-4 z-50">
-        <div class="bg-white border-l-4 border-accent-error rounded-lg shadow-lg p-4 max-w-md">
+        <div class="bg-white border-l-4 border-red-600 rounded-lg shadow-lg p-4 max-w-md">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-accent-error mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
-            <p class="text-sm font-medium text-primary"><%= alert %></p>
+            <p class="text-sm font-medium text-gray-900"><%= alert %></p>
           </div>
         </div>
       </div>
     <% end %>
 
-    <%= yield %>
+    <%# Include navigation if user is authenticated %>
+    <% if user_signed_in? %>
+      <%= render "shared/navigation" %>
+      <main class="flex-1 overflow-auto">
+        <%= yield %>
+      </main>
+    <% else %>
+      <%= yield %>
+    <% end %>
   </body>
 </html>

@@ -1,26 +1,80 @@
-<h2>Log in</h2>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1b5e3b] via-[#2a7d54] to-[#5a9d7c] relative">
+  <%# Theme Toggle Button (placeholder - will add Stimulus controller later) %>
+  <button
+    type="button"
+    data-action="click->theme#toggle"
+    aria-label="Cambiar tema"
+    class="absolute top-5 right-5 bg-white/15 border-none rounded-lg p-2 cursor-pointer text-white flex items-center justify-center hover:bg-white/25 transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  </button>
 
-<%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
-  <div class="field">
-    <p><%= f.label :email %></p>
-    <p><%= f.email_field :email, autofocus: true, autocomplete: "email" %></p>
-  </div>
-
-  <div class="field">
-    <p><%= f.label :password %></p>
-    <p><%= f.password_field :password, autocomplete: "current-password" %></p>
-  </div>
-
-  <% if devise_mapping.rememberable? %>
-    <div class="field">
-      <p><%= f.check_box :remember_me %></p>
-      <p><%= f.label :remember_me %></p>
+  <%# Login Card %>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-10 flex flex-col items-center">
+    <%# Logo %>
+    <div class="mb-6">
+      <%= image_tag "logo.svg", alt: "GENTRADE", class: "h-20" %>
     </div>
-  <% end %>
 
-  <div class="actions">
-    <%= f.submit "Log in" %>
+    <%# Tagline %>
+    <p class="text-sm text-gray-400 mb-7 text-center">
+      Asistente Comercial Inteligente
+    </p>
+
+    <%# Login Form %>
+    <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "w-full" }) do |f| %>
+
+      <%# Email Field %>
+      <div class="mb-3">
+        <%= f.email_field :email,
+          autofocus: true,
+          autocomplete: "email",
+          placeholder: "Email",
+          required: true,
+          class: "w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#f8f9fb] text-[0.95rem] outline-none transition-colors focus:border-[#1b5e3b] focus:ring-0" %>
+      </div>
+
+      <%# Password Field %>
+      <div class="mb-4">
+        <%= f.password_field :password,
+          autocomplete: "current-password",
+          placeholder: "Contraseña",
+          required: true,
+          class: "w-full px-4 py-3 rounded-lg border border-gray-200 bg-[#f8f9fb] text-[0.95rem] outline-none transition-colors focus:border-[#1b5e3b] focus:ring-0" %>
+      </div>
+
+      <%# Error Messages %>
+      <% if alert.present? %>
+        <div class="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-[0.85rem] mb-4 text-center">
+          <%= alert %>
+        </div>
+      <% end %>
+
+      <%# Remember Me (optional) %>
+      <% if devise_mapping.rememberable? %>
+        <div class="flex items-center mb-4">
+          <%= f.check_box :remember_me, class: "w-4 h-4 text-[#1b5e3b] border-gray-300 rounded focus:ring-[#1b5e3b]" %>
+          <%= f.label :remember_me, "Recordarme", class: "ml-2 text-sm text-gray-600" %>
+        </div>
+      <% end %>
+
+      <%# Submit Button %>
+      <button
+        type="submit"
+        class="w-full px-4 py-3 rounded-lg bg-[#1b5e3b] text-white text-[0.95rem] font-semibold border-none cursor-pointer transition-colors hover:bg-[#2a7d54] mb-3 disabled:opacity-50 disabled:cursor-not-allowed">
+        Entrar
+      </button>
+
+      <%# Forgot Password Link %>
+      <%= link_to "¿Olvidaste tu contraseña?",
+        new_password_path(resource_name),
+        class: "block text-center text-gray-500 text-sm underline hover:text-gray-700 transition-colors" %>
+    <% end %>
+
+    <%# Additional Links (if needed) %>
+    <div class="mt-4 text-center">
+      <%= render "devise/shared/links" %>
+    </div>
   </div>
-<% end %>
-
-<%= render "devise/shared/links" %>
+</div>
