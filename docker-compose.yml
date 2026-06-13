@@ -19,7 +19,7 @@ services:
     networks:
       - gentrade-network
 
-  # Redis Cache & Jobs
+  # Redis Cache & Jobs (Sidekiq)
   redis:
     image: redis:7-alpine
     container_name: gentrade-redis
@@ -35,55 +35,72 @@ services:
     networks:
       - gentrade-network
 
-  # Rails Backend API
+  # Qdrant Vector Database (RAG System - CRÍTICO)
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    container_name: gentrade-qdrant
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC API (opcional)
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gentrade-network
+
+  # Rails Application (Backend + Frontend con Hotwire)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: gentrade-backend
-    command: bash -c "bundle install && rails db:migrate && rails s -b 0.0.0.0 -p 3002"
+      target: development
+    container_name: gentrade-rails
+    command: >
+      bash -c "
+        bundle check --gemfile=/app/Gemfile > /dev/null 2>&1 || bundle install &&
+        bundle exec rails db:migrate &&
+        (bundle exec rails tailwindcss:watch &) &&
+        bundle exec rails s -b 0.0.0.0 -p 3002
+      "
     volumes:
       - ./backend:/app
       - backend_gems:/usr/local/bundle
     ports:
-      - "3002:3002"
+      - "3002:3002"  # Rails server
     environment:
+      # Database
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gentrade_rails_development
+      # Redis para Sidekiq
       - REDIS_URL=redis://redis:6379/0
-      - FRONTEND_URL=http://localhost:5173
+      # Qdrant para RAG
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=materials
+      # OpenAI para embeddings + generación
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # Rails
       - RAILS_ENV=development
+      - RAILS_LOG_LEVEL=debug
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - gentrade-network
-
-  # React Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: gentrade-frontend
-    command: npm run dev -- --host 0.0.0.0
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173"
-    environment:
-      - BACKEND_URL=http://backend:3002
-      - VITE_APP_NAME=GENTRADE
-      - VITE_APP_TAGLINE=Asistente Comercial Inteligente
-    depends_on:
-      - backend
+      qdrant:
+        condition: service_healthy
     networks:
       - gentrade-network
 
 volumes:
   postgres_data:
   redis_data:
+  qdrant_data:
   backend_gems:
 
 networks:
