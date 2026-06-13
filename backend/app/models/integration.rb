@@ -2,6 +2,7 @@
 
 class Integration < ApplicationRecord
   belongs_to :client
+  has_many :metrics, dependent: :destroy
 
   # Enums
   enum :status, { active: 0, expired: 1, revoked: 2, error: 3 }, default: :active

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_12_234257) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_13_073507) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,6 +54,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_234257) do
     t.datetime "updated_at", null: false
     t.index ["client_id"], name: "index_materials_on_client_id"
     t.index ["material_type"], name: "index_materials_on_material_type"
+  end
+
+  create_table "metrics", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.bigint "integration_id", null: false
+    t.integer "source", default: 0, null: false
+    t.string "metric_type", null: false
+    t.decimal "value", precision: 15, scale: 2, default: "0.0"
+    t.date "date", null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "source", "date"], name: "index_metrics_on_client_id_and_source_and_date"
+    t.index ["client_id"], name: "index_metrics_on_client_id"
+    t.index ["date"], name: "index_metrics_on_date"
+    t.index ["integration_id", "date"], name: "index_metrics_on_integration_id_and_date"
+    t.index ["integration_id"], name: "index_metrics_on_integration_id"
+    t.index ["metric_type"], name: "index_metrics_on_metric_type"
+    t.index ["source"], name: "index_metrics_on_source"
   end
 
   create_table "proposal_messages", force: :cascade do |t|
@@ -100,6 +119,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_234257) do
 
   add_foreign_key "integrations", "clients"
   add_foreign_key "materials", "clients"
+  add_foreign_key "metrics", "clients"
+  add_foreign_key "metrics", "integrations"
   add_foreign_key "proposal_messages", "proposals"
   add_foreign_key "proposal_versions", "proposals"
   add_foreign_key "proposals", "clients"

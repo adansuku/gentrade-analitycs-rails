@@ -22,6 +22,10 @@ Rails.application.routes.draw do
           post 'generate', on: :collection
         end
         resources :integrations, only: [:index, :create, :destroy]
+        resources :metrics, only: [:index] do
+          get 'summary', on: :collection
+          post 'sync', on: :collection
+        end
       end
 
       resources :proposals, only: [:show, :update, :destroy] do
