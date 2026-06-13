@@ -1,0 +1,177 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe Integrations::MetaAdsSync do
+  let(:client) { create(:client) }
+  let(:integration) do
+    create(
+      :integration,
+      client: client,
+      provider: :meta,
+      status: :active,
+      access_token: 'valid_meta_token',
+      metadata: { 'ad_account_id' => 'act_123456789' }
+    )
+  end
+
+  let(:service) { described_class.new(integration) }
+  let(:start_date) { 7.days.ago.to_date }
+  let(:end_date) { Date.current }
+
+  describe '#call' do
+    context 'when integration is valid and active' do
+      let(:graph_api) { instance_double(Koala::Facebook::API) }
+      let(:insights_data) do
+        [
+          {
+            'date_start' => '2026-06-10',
+            'date_stop' => '2026-06-10',
+            'impressions' => '5000',
+            'clicks' => '250',
+            'spend' => '125.50',
+            'reach' => '4500',
+            'ctr' => '5.0',
+            'cpc' => '0.50',
+            'cpm' => '25.10',
+            'conversions' => '15'
+          }
+        ]
+      end
+
+      before do
+        allow(Koala::Facebook::API).to receive(:new).and_return(graph_api)
+        allow(graph_api).to receive(:get_connections).and_return(insights_data)
+      end
+
+      it 'fetches and saves metrics successfully' do
+        expect {
+          result = service.call(start_date: start_date, end_date: end_date)
+          expect(result[:success]).to be true
+        }.to change { Metric.count }
+      end
+
+      it 'creates metrics with correct source' do
+        service.call(start_date: start_date, end_date: end_date)
+
+        metric = Metric.source_meta_ads.first
+        expect(metric.client_id).to eq(client.id)
+        expect(metric.integration_id).to eq(integration.id)
+        expect(metric.source).to eq('meta_ads')
+      end
+
+      it 'converts string values to decimals correctly' do
+        service.call(start_date: start_date, end_date: end_date)
+
+        spend_metric = Metric.source_meta_ads.by_type('spend').first
+        expect(spend_metric.value).to eq(125.5)
+
+        cpc_metric = Metric.source_meta_ads.by_type('cpc').first
+        expect(cpc_metric.value).to eq(0.5)
+      end
+
+      it 'stores all expected metric types' do
+        service.call(start_date: start_date, end_date: end_date)
+
+        expected_types = %w[impressions clicks spend reach ctr cpc cpm conversions]
+        stored_types = Metric.source_meta_ads.metric_types
+
+        expected_types.each do |type|
+          expect(stored_types).to include(type)
+        end
+      end
+
+      it 'deletes old metrics for the same date range' do
+        create(
+          :metric,
+          client: client,
+          integration: integration,
+          source: :meta_ads,
+          date: start_date
+        )
+
+        expect {
+          service.call(start_date: start_date, end_date: end_date)
+        }.to change {
+          Metric.source_meta_ads
+                .where(integration: integration)
+                .for_date_range(start_date, end_date)
+                .count
+        }
+      end
+    end
+
+    context 'when integration is not active' do
+      before { integration.update(status: :inactive) }
+
+      it 'returns an error' do
+        result = service.call(start_date: start_date, end_date: end_date)
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('Integration is not active')
+      end
+
+      it 'does not create any metrics' do
+        expect {
+          service.call(start_date: start_date, end_date: end_date)
+        }.not_to change { Metric.count }
+      end
+    end
+
+    context 'when integration is expired' do
+      before do
+        integration.update(
+          expires_at: 1.day.ago,
+          status: :active
+        )
+      end
+
+      it 'returns an error' do
+        result = service.call(start_date: start_date, end_date: end_date)
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('Integration is expired')
+      end
+    end
+
+    context 'when integration is not Meta' do
+      before { integration.update(provider: :google) }
+
+      it 'returns an error' do
+        result = service.call(start_date: start_date, end_date: end_date)
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('Wrong provider')
+      end
+    end
+
+    context 'when ad_account_id is missing' do
+      before { integration.update(metadata: {}) }
+
+      it 'returns an error' do
+        result = service.call(start_date: start_date, end_date: end_date)
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq('No ad_account_id configured')
+      end
+    end
+
+    context 'when Meta API returns authorization error' do
+      let(:graph_api) { instance_double(Koala::Facebook::API) }
+
+      before do
+        allow(Koala::Facebook::API).to receive(:new).and_return(graph_api)
+        allow(graph_api).to receive(:get_connections)
+          .and_raise(Koala::Facebook::AuthenticationError.new(400, 'Invalid OAuth token'))
+      end
+
+      it 'marks integration as expired' do
+        expect {
+          service.call(start_date: start_date, end_date: end_date)
+        }.to change { integration.reload.status }.to('expired')
+      end
+
+      it 'returns an error' do
+        result = service.call(start_date: start_date, end_date: end_date)
+        expect(result[:success]).to be false
+        expect(result[:error]).to include('Authorization failed')
+      end
+    end
+  end
+end
