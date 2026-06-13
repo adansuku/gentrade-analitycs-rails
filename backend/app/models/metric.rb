@@ -9,7 +9,8 @@ class Metric < ApplicationRecord
     google_analytics: 0,
     google_ads: 1,
     meta_ads: 2,
-    shopify: 3
+    slack: 3,
+    shopify: 4
   }, _prefix: true
 
   # Validations

@@ -33,7 +33,12 @@ Rails.application.routes.draw do
       end
 
       # Integration detail endpoint (not nested)
-      resources :integrations, only: [:show]
+      resources :integrations, only: [:show] do
+        member do
+          get 'slack/channels', to: 'integrations#slack_channels'
+          post 'slack/send_report', to: 'integrations#slack_send_report'
+        end
+      end
 
       # OAuth endpoints (public, not nested)
       # Google OAuth
@@ -43,6 +48,10 @@ Rails.application.routes.draw do
       # Meta OAuth
       get 'integrations/meta/auth', to: 'integrations#meta_auth'
       get 'integrations/meta/callback', to: 'integrations#meta_callback'
+
+      # Slack OAuth
+      get 'integrations/slack/auth', to: 'integrations#slack_auth'
+      get 'integrations/slack/callback', to: 'integrations#slack_callback'
     end
   end
 

@@ -47,6 +47,57 @@ module Api
         head :no_content
       end
 
+      # GET /api/v1/integrations/:id/slack/channels
+      def slack_channels
+        @integration = Integration.find(params[:id])
+
+        unless @integration.provider_slack?
+          return render json: { error: 'Integration is not a Slack integration' },
+                       status: :unprocessable_entity
+        end
+
+        messenger = Integrations::SlackMessenger.new(@integration)
+        result = messenger.list_channels
+
+        if result[:success]
+          render json: { channels: result[:data] }
+        else
+          render json: { error: result[:error] }, status: :unprocessable_entity
+        end
+      end
+
+      # POST /api/v1/integrations/:id/slack/send_report
+      def slack_send_report
+        @integration = Integration.find(params[:id])
+
+        unless @integration.provider_slack?
+          return render json: { error: 'Integration is not a Slack integration' },
+                       status: :unprocessable_entity
+        end
+
+        channel = params[:channel] || @integration.metadata['default_channel']
+        report_type = params[:report_type] || 'daily_summary'
+
+        unless channel
+          return render json: { error: 'Channel is required' }, status: :bad_request
+        end
+
+        # Enqueue the job
+        SlackReportJob.perform_later(
+          @integration.id,
+          report_type: report_type,
+          channel: channel,
+          start_date: params[:start_date],
+          end_date: params[:end_date],
+          period: params[:period]
+        )
+
+        render json: {
+          message: "Report #{report_type} queued for sending to channel #{channel}",
+          status: 'processing'
+        }, status: :accepted
+      end
+
       # GET /api/v1/integrations/google/auth
       def google_auth
         redirect_uri = ENV['GOOGLE_INTEGRATIONS_REDIRECT_URI']
@@ -150,6 +201,59 @@ module Api
           access_token: token_response[:access_token],
           expires_at: token_response[:expires_at],
           status: :active
+        )
+
+        if integration.save
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success"
+        else
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error"
+        end
+      end
+
+      # GET /api/v1/integrations/slack/auth
+      def slack_auth
+        redirect_uri = ENV['SLACK_REDIRECT_URI']
+        client_id = ENV['SLACK_CLIENT_ID']
+        scopes = ENV.fetch('SLACK_SCOPES', 'chat:write,channels:read,chat:write.public')
+
+        auth_url = "https://slack.com/oauth/v2/authorize?" \
+                   "client_id=#{client_id}&" \
+                   "redirect_uri=#{CGI.escape(redirect_uri)}&" \
+                   "scope=#{CGI.escape(scopes)}&" \
+                   "state=#{generate_state_token}"
+
+        render json: { auth_url: auth_url }
+      end
+
+      # GET /api/v1/integrations/slack/callback
+      def slack_callback
+        code = params[:code]
+        state = params[:state]
+
+        unless verify_state_token(state)
+          return render json: { error: 'Invalid state token' }, status: :forbidden
+        end
+
+        token_response = exchange_slack_code(code)
+
+        if token_response[:error]
+          return render json: { error: token_response[:error] },
+                       status: :unprocessable_entity
+        end
+
+        client_id = decode_state_token(state)[:client_id]
+        client = Client.find(client_id)
+
+        integration = client.integrations.find_or_initialize_by(provider: :slack)
+        integration.assign_attributes(
+          access_token: token_response[:access_token],
+          status: :active,
+          metadata: {
+            team_id: token_response[:team_id],
+            team_name: token_response[:team_name],
+            bot_user_id: token_response[:bot_user_id],
+            scope: token_response[:scope]
+          }
         )
 
         if integration.save
@@ -268,6 +372,37 @@ module Api
             access_token: data['access_token'],
             expires_at: data['expires_in']&.seconds&.from_now
           }
+        else
+          { error: 'Failed to exchange code for token' }
+        end
+      rescue StandardError => e
+        { error: e.message }
+      end
+
+      def exchange_slack_code(code)
+        redirect_uri = ENV['SLACK_REDIRECT_URI']
+
+        response = HTTP.post('https://slack.com/api/oauth.v2.access', form: {
+          client_id: ENV['SLACK_CLIENT_ID'],
+          client_secret: ENV['SLACK_CLIENT_SECRET'],
+          code: code,
+          redirect_uri: redirect_uri
+        })
+
+        if response.status.success?
+          data = JSON.parse(response.body)
+
+          if data['ok']
+            {
+              access_token: data['access_token'],
+              team_id: data['team']['id'],
+              team_name: data['team']['name'],
+              bot_user_id: data['bot_user_id'],
+              scope: data['scope']
+            }
+          else
+            { error: data['error'] || 'Slack OAuth failed' }
+          end
         else
           { error: 'Failed to exchange code for token' }
         end
