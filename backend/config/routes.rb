@@ -21,11 +21,24 @@ Rails.application.routes.draw do
         resources :proposals, only: [:index] do
           post 'generate', on: :collection
         end
+        resources :integrations, only: [:index, :create, :destroy]
       end
 
       resources :proposals, only: [:show, :update, :destroy] do
         post 'chat', on: :member
       end
+
+      # Integration detail endpoint (not nested)
+      resources :integrations, only: [:show]
+
+      # OAuth endpoints (public, not nested)
+      # Google OAuth
+      get 'integrations/google/auth', to: 'integrations#google_auth'
+      get 'integrations/google/callback', to: 'integrations#google_callback'
+
+      # Meta OAuth
+      get 'integrations/meta/auth', to: 'integrations#meta_auth'
+      get 'integrations/meta/callback', to: 'integrations#meta_callback'
     end
   end
 

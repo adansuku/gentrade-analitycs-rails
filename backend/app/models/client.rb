@@ -2,6 +2,7 @@ class Client < ApplicationRecord
   # Associations
   has_many :materials, dependent: :destroy
   has_many :proposals, dependent: :destroy
+  has_many :integrations, dependent: :destroy
 
   # Enums
   enum :industry, {

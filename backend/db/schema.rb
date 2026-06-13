@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_12_063829) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_12_234257) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -26,6 +26,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_063829) do
     t.index ["deleted_at"], name: "index_clients_on_deleted_at"
     t.index ["email"], name: "index_clients_on_email", unique: true
     t.index ["industry"], name: "index_clients_on_industry"
+  end
+
+  create_table "integrations", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.string "provider", null: false
+    t.text "access_token"
+    t.text "refresh_token"
+    t.datetime "expires_at"
+    t.jsonb "metadata", default: {}
+    t.integer "status", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "provider"], name: "index_integrations_on_client_id_and_provider", unique: true
+    t.index ["client_id"], name: "index_integrations_on_client_id"
+    t.index ["provider"], name: "index_integrations_on_provider"
+    t.index ["status"], name: "index_integrations_on_status"
   end
 
   create_table "materials", force: :cascade do |t|
@@ -82,6 +98,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_12_063829) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "integrations", "clients"
   add_foreign_key "materials", "clients"
   add_foreign_key "proposal_messages", "proposals"
   add_foreign_key "proposal_versions", "proposals"

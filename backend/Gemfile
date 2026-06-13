@@ -19,6 +19,7 @@ gem "rack-attack"
 # Auth
 gem "devise"
 gem "devise-jwt"
+gem "jwt"  # For OAuth state tokens
 
 # Integrations
 gem "google-apis-analyticsdata_v1beta"
@@ -30,6 +31,7 @@ gem "koala" # Meta/Facebook
 # AI
 gem "ruby-openai"
 gem "httparty"
+gem "http"  # For OAuth token exchange
 
 # Utilities
 gem "pagy"
