@@ -1,6 +1,7 @@
 <div id="materials-list"
-     data-controller="materials-filter audio-recorder"
-     data-audio-recorder-upload-url-value="<%= upload_client_materials_path(client) %>">
+     data-controller="materials-filter audio-recorder material-search"
+     data-audio-recorder-upload-url-value="<%= upload_client_materials_path(client) %>"
+     data-material-search-url-value="<%= search_client_materials_path(client) %>">
   <%# ── Barra de acciones ──────────────────────────────────────────── %>
   <div class="flex flex-wrap gap-2 mb-4">
     <%# Subir archivo %>
@@ -76,6 +77,19 @@
     </button>
     <span data-audio-recorder-target="timer" class="text-sm font-mono text-gray-500 tabular-nums">00:00</span>
     <span data-audio-recorder-target="status" class="text-sm text-gray-500">Pulsa para grabar una llamada o nota de voz</span>
+  </div>
+
+  <%# ── Búsqueda semántica ─────────────────────────────────────────── %>
+  <div class="relative mb-4">
+    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+    <input type="text"
+           data-material-search-target="input"
+           data-action="input->material-search#search"
+           placeholder="Búsqueda semántica en materiales…"
+           class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 bg-white text-sm outline-none focus:border-[#1b5e3b] transition-colors">
+    <div data-material-search-target="status" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"></div>
   </div>
 
   <%# ── Progreso de subida ─────────────────────────────────────────── %>

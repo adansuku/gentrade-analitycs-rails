@@ -54,6 +54,39 @@ class MaterialsController < ApplicationController
     end
   end
 
+  # GET /clients/:client_id/materials/search?q=...
+  # Búsqueda semántica (RAG): recupera fragmentos similares de Qdrant y
+  # devuelve los materiales correspondientes rankeados por similitud.
+  def search
+    query = params[:q].to_s.strip
+    return render(json: { results: [] }) if query.blank?
+
+    hits = Embeddings::Client.new.search(query, client_id: @client.id, top_k: 20)
+
+    # Agrupa por material y conserva el mejor score; preserva el orden por score.
+    best_by_material = {}
+    hits.each do |hit|
+      mid = hit[:material_id]
+      next if mid.nil?
+
+      best_by_material[mid] = [best_by_material[mid] || 0, hit[:score].to_f].max
+    end
+
+    materials = @client.materials.where(id: best_by_material.keys).index_by(&:id)
+    results = best_by_material
+              .sort_by { |_id, score| -score }
+              .filter_map do |mid, score|
+                m = materials[mid]
+                next unless m
+
+                { id: m.id, title: m.title, material_type: m.material_type, score: score.round(4) }
+              end
+
+    render json: { results: results }
+  rescue StandardError => e
+    render json: { results: [], error: e.message }, status: :unprocessable_entity
+  end
+
   def destroy
     @material = @client.materials.find(params[:id])
     @material.destroy

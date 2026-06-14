@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   resources :clients do
     resources :materials, only: [:new, :create, :destroy] do
       post 'upload', on: :collection
+      get 'search', on: :collection
     end
   end
 
