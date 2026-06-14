@@ -11,7 +11,7 @@ class Metric < ApplicationRecord
     meta_ads: 2,
     slack: 3,
     shopify: 4
-  }, _prefix: true
+  }, prefix: true
 
   # Validations
   validates :source, presence: true
