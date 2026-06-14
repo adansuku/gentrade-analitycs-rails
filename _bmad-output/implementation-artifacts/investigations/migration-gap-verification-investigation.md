@@ -264,3 +264,13 @@ Scope acotado por el usuario: solo Google Analytics, Google Ads, Meta (Facebook)
 | 7 | GA: portar `fetchTopPages` + `fetchTrafficSources` | Medium | Open | |
 | 8 | Meta: portar `fetchCreatives` | Medium | Open | |
 | 9 | Google Ads: verificar soporte multi-customer | Low | Open | |
+| 10 | RAG: integrar recuperación semántica en Proposals::Generator | Medium | Open | El generador aún incluye TODO el contenido (`m.content`) al prompt. El motor RAG (Embeddings::Client/Indexer/EmbeddingJob + búsqueda) ya está; falta usarlo en el generador para acotar contexto cuando hay muchos materiales. Decisión de producto: cuándo recuperar vs incluir todo. |
+
+## Follow-up: 2026-06-14 #2 — RAG / búsqueda semántica (motor completo)
+
+Implementado el motor RAG (paridad con el origen `lib/embeddings.js`):
+- `Embeddings::Client` (Qdrant REST + OpenAI embeddings, text-embedding-3-small/1536/Cosine; chunk 500/50; upsert/search filtrado por client_id/delete).
+- `EmbeddingJob` + callbacks en `Material` (indexa al crear/editar con contenido, borra al destruir).
+- `MaterialsController#search` + barra "Búsqueda semántica en materiales" (Stimulus `material-search`).
+- 12 specs nuevos, verde. Pendiente: integración en el generador de propuestas (Backlog #10).
+- **Config:** requiere `OPENAI_API_KEY` (embeddings) y `QDRANT_URL`/`QDRANT_COLLECTION` (ya en env). Qdrant corre en `gentrade-qdrant`.
