@@ -5,6 +5,7 @@ Fecha: 2026-06-14.
 
 ## ✅ Hecho
 
+- **INFRA — Sidekiq no arrancaba** (causa raíz de que las transcripciones/embeddings nunca se procesaran). El `command` del backend en docker-compose solo lanzaba `rails s`; se añadió `bundle exec sidekiq -C config/sidekiq.yml`. Ahora los jobs en background se procesan. ✅ 2026-06-14
 - Subir archivo · Escribir nota · Filtros por tipo + lista agrupada
 - Grabar audio en navegador (MediaRecorder → upload)
 - Transcripción automática (Whisper) → material `transcript`

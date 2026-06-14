@@ -63,6 +63,7 @@ services:
         bundle check --gemfile=/app/Gemfile > /dev/null 2>&1 || bundle install &&
         bundle exec rails db:migrate &&
         bundle exec rails tailwindcss:watch &
+        bundle exec sidekiq -C config/sidekiq.yml &
         bundle exec rails s -b 0.0.0.0 -p 3002
       "
     volumes:
