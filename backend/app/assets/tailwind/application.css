@@ -17,6 +17,12 @@
    CSS VARIABLES - Light Theme (Default)
    ═══════════════════════════════════════════════════════════════ */
 
+/* Wrapped in @layer base so these resets/defaults sit below
+   @layer utilities in the cascade — otherwise this unlayered CSS
+   would always win over Tailwind utility classes regardless of
+   specificity (e.g. `* { margin: 0 }` overriding `.mb-3`). */
+@layer base {
+
 :root,
 [data-theme="light"] {
   /* ── Surfaces ── */
@@ -141,12 +147,12 @@
    browser's default padding, leaving any <button>/<input> without an explicit
    .btn-* / .login-button / etc. class hugging its own borders. Specific
    classes still override this. */
-button {
+:where(button) {
   padding: 0.5rem 0.875rem;
 }
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 select,
-textarea {
+textarea) {
   padding: 0.5rem 0.75rem;
 }
 
@@ -225,6 +231,8 @@ h1 { font-weight: 700; }
 h2 { font-weight: 650; }
 h3 { font-weight: 600; }
 h4 { font-weight: 600; }
+
+} /* end @layer base */
 
 /* ═══════════════════════════════════════════════════════════════
    LOGIN SCREEN
