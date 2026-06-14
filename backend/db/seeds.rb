@@ -2,10 +2,12 @@ puts "🌱 Seeding database..."
 
 # Create test user
 puts "Creating test user..."
-User.find_or_create_by!(email: 'admin@gentrade.com') do |user|
-  user.password = 'gentrade2024'
-  user.password_confirmation = 'gentrade2024'
+user = User.find_or_create_by!(email: 'admin@gentrade.com') do |u|
+  u.password = 'gentrade2024'
+  u.password_confirmation = 'gentrade2024'
+  u.role = :admin
 end
+user.confirm unless user.confirmed?
 puts "✅ User created: admin@gentrade.com / gentrade2024"
 
 # Create clients

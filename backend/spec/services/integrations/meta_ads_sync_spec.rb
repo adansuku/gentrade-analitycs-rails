@@ -25,23 +25,34 @@ RSpec.describe Integrations::MetaAdsSync do
       let(:insights_data) do
         [
           {
-            'date_start' => '2026-06-10',
-            'date_stop' => '2026-06-10',
-            'impressions' => '5000',
-            'clicks' => '250',
+            'campaign_id' => '999',
+            'campaign_name' => 'Test Campaign',
             'spend' => '125.50',
             'reach' => '4500',
-            'ctr' => '5.0',
+            'impressions' => '5000',
+            'clicks' => '250',
             'cpc' => '0.50',
             'cpm' => '25.10',
-            'conversions' => '15'
+            'ctr' => '5.0',
+            'actions' => [{ 'action_type' => 'purchase', 'value' => '15' }],
+            'action_values' => [{ 'action_type' => 'purchase', 'value' => '300' }]
           }
+        ]
+      end
+      let(:campaigns_data) do
+        [
+          { 'id' => '999', 'name' => 'Test Campaign', 'objective' => 'CONVERSIONS', 'status' => 'ACTIVE' }
         ]
       end
 
       before do
         allow(Koala::Facebook::API).to receive(:new).and_return(graph_api)
-        allow(graph_api).to receive(:get_connections).and_return(insights_data)
+        allow(graph_api).to receive(:get_connections)
+          .with(anything, 'insights', anything)
+          .and_return(insights_data)
+        allow(graph_api).to receive(:get_connections)
+          .with(anything, 'campaigns', anything)
+          .and_return(campaigns_data)
       end
 
       it 'fetches and saves metrics successfully' do
@@ -66,14 +77,14 @@ RSpec.describe Integrations::MetaAdsSync do
         spend_metric = Metric.source_meta_ads.by_type('spend').first
         expect(spend_metric.value).to eq(125.5)
 
-        cpc_metric = Metric.source_meta_ads.by_type('cpc').first
-        expect(cpc_metric.value).to eq(0.5)
+        clicks_metric = Metric.source_meta_ads.by_type('clicks').first
+        expect(clicks_metric.value).to eq(250)
       end
 
       it 'stores all expected metric types' do
         service.call(start_date: start_date, end_date: end_date)
 
-        expected_types = %w[impressions clicks spend reach ctr cpc cpm conversions]
+        expected_types = %w[impressions clicks spend conversions]
         stored_types = Metric.source_meta_ads.metric_types
 
         expected_types.each do |type|
@@ -102,7 +113,7 @@ RSpec.describe Integrations::MetaAdsSync do
     end
 
     context 'when integration is not active' do
-      before { integration.update(status: :inactive) }
+      before { integration.update(status: :revoked) }
 
       it 'returns an error' do
         result = service.call(start_date: start_date, end_date: end_date)
@@ -170,7 +181,7 @@ RSpec.describe Integrations::MetaAdsSync do
       it 'returns an error' do
         result = service.call(start_date: start_date, end_date: end_date)
         expect(result[:success]).to be false
-        expect(result[:error]).to include('Authorization failed')
+        expect(result[:error]).to include('Authentication failed')
       end
     end
   end

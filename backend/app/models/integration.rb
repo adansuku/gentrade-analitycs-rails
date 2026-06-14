@@ -7,7 +7,7 @@ class Integration < ApplicationRecord
 
   # Enums
   enum :status, { active: 0, expired: 1, revoked: 2, error: 3 }, default: :active
-  enum :provider, { google: 0, meta: 1, slack: 2, shopify: 3 }, prefix: true
+  enum :provider, { google: "google", meta: "meta", slack: "slack", shopify: "shopify" }, prefix: true
 
   # Validations
   validates :provider, presence: true, uniqueness: { scope: :client_id }

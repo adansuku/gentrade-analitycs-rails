@@ -43,7 +43,7 @@ RSpec.describe Integrations::GoogleAnalyticsSync do
         allow(Google::Apis::AnalyticsdataV1beta::AnalyticsDataService).to receive(:new)
           .and_return(analytics_service)
         allow(analytics_service).to receive(:authorization=)
-        allow(analytics_service).to receive(:run_report).and_return(response)
+        allow(analytics_service).to receive(:run_property_report).and_return(response)
       end
 
       it 'fetches and saves metrics successfully' do
@@ -84,7 +84,7 @@ RSpec.describe Integrations::GoogleAnalyticsSync do
     end
 
     context 'when integration is not active' do
-      before { integration.update(status: :inactive) }
+      before { integration.update(status: :revoked) }
 
       it 'returns an error' do
         result = service.call(start_date: start_date, end_date: end_date)
@@ -141,7 +141,7 @@ RSpec.describe Integrations::GoogleAnalyticsSync do
         allow(Google::Apis::AnalyticsdataV1beta::AnalyticsDataService).to receive(:new)
           .and_return(analytics_service)
         allow(analytics_service).to receive(:authorization=)
-        allow(analytics_service).to receive(:run_report)
+        allow(analytics_service).to receive(:run_property_report)
           .and_raise(Google::Apis::AuthorizationError.new('Invalid token'))
       end
 
