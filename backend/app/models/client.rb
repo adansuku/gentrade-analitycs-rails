@@ -4,6 +4,8 @@ class Client < ApplicationRecord
   has_many :proposals, dependent: :destroy
   has_many :integrations, dependent: :destroy
   has_many :metrics, dependent: :destroy
+  has_many :report_objectives, class_name: "ClientReportObjective", dependent: :destroy
+  has_many :daily_snapshots, class_name: "ClientDailySnapshot", dependent: :destroy
 
   # Enums
   enum :industry, {

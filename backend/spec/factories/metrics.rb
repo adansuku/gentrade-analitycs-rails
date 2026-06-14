@@ -2,10 +2,10 @@ FactoryBot.define do
   factory :metric do
     client { nil }
     integration { nil }
-    source { 1 }
-    metric_type { "MyString" }
+    source { :shopify }
+    metric_type { "revenue" }
     value { "9.99" }
     date { "2026-06-13" }
-    metadata { "" }
+    metadata { {} }
   end
 end

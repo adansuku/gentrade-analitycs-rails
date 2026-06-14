@@ -10,9 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_13_113649) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_13_150002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "client_daily_snapshots", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.date "date", null: false
+    t.jsonb "stats", default: {}
+    t.jsonb "ecommerce"
+    t.jsonb "insights"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "date"], name: "idx_client_snap_on_client_date", unique: true
+    t.index ["client_id"], name: "index_client_daily_snapshots_on_client_id"
+  end
+
+  create_table "client_report_objectives", force: :cascade do |t|
+    t.bigint "client_id", null: false
+    t.string "year_month", null: false
+    t.jsonb "targets", default: {}
+    t.jsonb "costs"
+    t.jsonb "narrative"
+    t.jsonb "snapshot"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_id", "year_month"], name: "idx_client_obj_on_client_year_month", unique: true
+    t.index ["client_id"], name: "index_client_report_objectives_on_client_id"
+  end
 
   create_table "clients", force: :cascade do |t|
     t.string "name", null: false
@@ -26,6 +51,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_13_113649) do
     t.index ["deleted_at"], name: "index_clients_on_deleted_at"
     t.index ["email"], name: "index_clients_on_email", unique: true
     t.index ["industry"], name: "index_clients_on_industry"
+  end
+
+  create_table "integration_data", force: :cascade do |t|
+    t.bigint "integration_id", null: false
+    t.string "category", null: false
+    t.jsonb "data", default: {}
+    t.string "period"
+    t.datetime "fetched_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fetched_at"], name: "index_integration_data_on_fetched_at"
+    t.index ["integration_id", "category", "period"], name: "idx_on_integration_id_category_period_8f285dd232"
+    t.index ["integration_id", "category"], name: "index_integration_data_on_integration_id_and_category"
+    t.index ["integration_id"], name: "index_integration_data_on_integration_id"
   end
 
   create_table "integrations", force: :cascade do |t|
@@ -129,6 +168,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_13_113649) do
     t.index ["role"], name: "index_users_on_role"
   end
 
+  add_foreign_key "client_daily_snapshots", "clients"
+  add_foreign_key "client_report_objectives", "clients"
+  add_foreign_key "integration_data", "integrations"
   add_foreign_key "integrations", "clients"
   add_foreign_key "materials", "clients"
   add_foreign_key "metrics", "clients"

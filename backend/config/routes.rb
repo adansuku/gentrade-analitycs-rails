@@ -36,6 +36,39 @@ Rails.application.routes.draw do
           get 'summary', on: :collection
           post 'sync', on: :collection
         end
+
+        # Reports
+        resources :reports, only: [] do
+          collection do
+            get  'daily',                   to: 'reports#daily'
+            get  'weekly',                  to: 'reports#weekly'
+            get  'monthly',                 to: 'reports#monthly'
+
+            post 'narrative/regenerate',    to: 'reports#regenerate_narrative'
+            delete 'cache',                  to: 'reports#clear_cache'
+
+            get  'objectives',              to: 'reports#objectives'
+            put  'objectives',              to: 'reports#upsert_objectives'
+            post 'objectives/copy',         to: 'reports#copy_objectives'
+
+            get  'costs',                   to: 'reports#costs'
+            put  'costs',                   to: 'reports#upsert_costs'
+
+            get  'compare',                 to: 'reports#compare'
+            get  'explorer',                to: 'reports#explorer_summary'
+            get  'explorer/data',           to: 'reports#explorer_data'
+            get  'ingestion',               to: 'reports#ingestion_summary'
+
+            delete 'integration_data/:integration_id', to: 'reports#delete_integration_data',
+                   as: :delete_integration_data
+
+            post   'backfill/:integration_id',        to: 'reports#start_backfill'
+            get    'backfill/:integration_id/status', to: 'reports#backfill_status'
+          end
+        end
+
+        # Insights
+        resources :insights, only: [:index, :create]
       end
 
       resources :proposals, only: [:show, :update, :destroy] do

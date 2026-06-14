@@ -40,7 +40,102 @@ module Integrations
       end
     end
 
+    def fetch_channel_breakdown(start_date, end_date)
+      property_id = @integration.metadata["property_id"]
+      return [] unless property_id
+
+      service = analytics_service
+
+      request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(
+        date_ranges: [
+          Google::Apis::AnalyticsdataV1beta::DateRange.new(start_date: start_date.to_s, end_date: end_date.to_s)
+        ],
+        dimensions: [
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'sessionDefaultChannelGroup')
+        ],
+        metrics: [
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'sessions'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'totalUsers'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'conversions')
+        ],
+        order_bys: [
+          Google::Apis::AnalyticsdataV1beta::OrderBy.new(
+            metric: Google::Apis::AnalyticsdataV1beta::MetricOrderBy.new(metric_name: 'sessions'),
+            desc: true
+          )
+        ],
+        limit: 15
+      )
+
+      response = service.run_report("properties/#{property_id}", request)
+
+      (response.rows || []).map do |row|
+        {
+          "channel" => row.dimension_values[0].value,
+          "sessions" => row.metric_values[0].value.to_i,
+          "users" => row.metric_values[1].value.to_i,
+          "conversions" => row.metric_values[2].value.to_i
+        }
+      end
+    rescue => e
+      Rails.logger.warn "Channel breakdown failed: #{e.message}"
+      []
+    end
+
+    def fetch_ecommerce_events(start_date, end_date)
+      property_id = @integration.metadata["property_id"]
+      return nil unless property_id
+
+      service = analytics_service
+
+      request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(
+        date_ranges: [
+          Google::Apis::AnalyticsdataV1beta::DateRange.new(start_date: start_date.to_s, end_date: end_date.to_s)
+        ],
+        dimensions: [
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'eventName')
+        ],
+        metrics: [
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'eventCount')
+        ],
+        dimension_filter: Google::Apis::AnalyticsdataV1beta::FilterExpression.new(
+          filter: Google::Apis::AnalyticsdataV1beta::Filter.new(
+            field_name: 'eventName',
+            in_list_filter: Google::Apis::AnalyticsdataV1beta::InListFilter.new(
+              values: %w[view_item add_to_cart begin_checkout purchase]
+            )
+          )
+        )
+      )
+
+      response = service.run_report("properties/#{property_id}", request)
+
+      counts = { "view_item" => 0, "add_to_cart" => 0, "begin_checkout" => 0, "purchase" => 0 }
+      (response.rows || []).each do |row|
+        name = row.dimension_values&.[](0)&.value
+        count = row.metric_values&.[](0)&.value.to_i
+        counts[name] = count if counts.key?(name)
+      end
+
+      {
+        "views" => counts["view_item"],
+        "carts" => counts["add_to_cart"],
+        "checkouts" => counts["begin_checkout"],
+        "orders" => counts["purchase"],
+        "has_data" => counts.values.any? { |v| v > 0 }
+      }
+    rescue => e
+      Rails.logger.warn "Ecommerce events fetch failed: #{e.message}"
+      nil
+    end
+
     private
+
+    def analytics_service
+      service = Google::Apis::AnalyticsdataV1beta::AnalyticsDataService.new
+      service.authorization = @integration.access_token
+      service
+    end
 
     def fetch_analytics_data(service, property_id, start_date, end_date)
       request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(

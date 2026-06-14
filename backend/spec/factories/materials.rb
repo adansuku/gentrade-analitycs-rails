@@ -1,9 +1,9 @@
 FactoryBot.define do
   factory :material do
     client { nil }
-    material_type { 1 }
+    material_type { :note }
     content { "MyText" }
     file_url { "MyString" }
-    metadata { "" }
+    metadata { {} }
   end
 end

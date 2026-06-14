@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :proposal do
     client { nil }
-    status { 1 }
+    status { :draft }
     title { "MyString" }
-    metadata { "" }
+    metadata { {} }
   end
 end
