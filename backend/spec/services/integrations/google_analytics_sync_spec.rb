@@ -158,4 +158,76 @@ RSpec.describe Integrations::GoogleAnalyticsSync do
       end
     end
   end
+
+  describe '#fetch_top_pages' do
+    let(:analytics_service) { instance_double(Google::Apis::AnalyticsdataV1beta::AnalyticsDataService) }
+    let(:response) do
+      double(
+        rows: [
+          double(
+            dimension_values: [double(value: '/inicio')],
+            metric_values: [double(value: '450'), double(value: '300'), double(value: '180.5')]
+          ),
+          double(
+            dimension_values: [double(value: '/productos')],
+            metric_values: [double(value: '220'), double(value: '150'), double(value: '95.0')]
+          )
+        ]
+      )
+    end
+
+    before do
+      allow(Google::Apis::AnalyticsdataV1beta::AnalyticsDataService).to receive(:new).and_return(analytics_service)
+      allow(analytics_service).to receive(:authorization=)
+      allow(analytics_service).to receive(:run_property_report).and_return(response)
+    end
+
+    it 'devuelve las paginas mas vistas con sus metricas' do
+      pages = service.fetch_top_pages(start_date, end_date)
+
+      expect(pages.size).to eq(2)
+      expect(pages.first).to eq(
+        "page" => '/inicio', "views" => 450, "users" => 300, "avg_duration" => 180.5
+      )
+    end
+
+    it 'devuelve [] si no hay property_id' do
+      integration.update!(metadata: {})
+      expect(service.fetch_top_pages(start_date, end_date)).to eq([])
+    end
+  end
+
+  describe '#fetch_traffic_sources' do
+    let(:analytics_service) { instance_double(Google::Apis::AnalyticsdataV1beta::AnalyticsDataService) }
+    let(:response) do
+      double(
+        rows: [
+          double(
+            dimension_values: [double(value: 'google'), double(value: 'organic')],
+            metric_values: [double(value: '500'), double(value: '420')]
+          )
+        ]
+      )
+    end
+
+    before do
+      allow(Google::Apis::AnalyticsdataV1beta::AnalyticsDataService).to receive(:new).and_return(analytics_service)
+      allow(analytics_service).to receive(:authorization=)
+      allow(analytics_service).to receive(:run_property_report).and_return(response)
+    end
+
+    it 'devuelve las fuentes de trafico con source y medium' do
+      sources = service.fetch_traffic_sources(start_date, end_date)
+
+      expect(sources.size).to eq(1)
+      expect(sources.first).to eq(
+        "source" => 'google', "medium" => 'organic', "sessions" => 500, "users" => 420
+      )
+    end
+
+    it 'devuelve [] si no hay property_id' do
+      integration.update!(metadata: {})
+      expect(service.fetch_traffic_sources(start_date, end_date)).to eq([])
+    end
+  end
 end

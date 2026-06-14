@@ -120,6 +120,23 @@ module Api
         render json: { auth_url: auth_url }
       end
 
+      # GET /api/v1/integrations/:id/google/ads_accounts
+      # Lista las cuentas Google Ads accesibles para que el usuario elija cuál conectar.
+      def google_ads_accounts
+        integration = Integration.find(params[:id])
+        accounts = Integrations::GoogleAdsSync.new(integration).list_accessible_customers
+
+        render json: { accounts: accounts }
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Integration not found' }, status: :not_found
+      rescue StandardError => e
+        render json: {
+          accounts: [],
+          error: "Error al listar cuentas: #{e.message}. Puedes introducir el Customer ID manualmente.",
+          manual: true
+        }
+      end
+
       # GET /api/v1/integrations/google/callback
       def google_callback
         code = params[:code]
@@ -152,9 +169,9 @@ module Api
         )
 
         if integration.save
-          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success"
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success", allow_other_host: true
         else
-          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error"
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error", allow_other_host: true
         end
       end
 
@@ -204,9 +221,9 @@ module Api
         )
 
         if integration.save
-          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success"
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success", allow_other_host: true
         else
-          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error"
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error", allow_other_host: true
         end
       end
 
@@ -257,9 +274,9 @@ module Api
         )
 
         if integration.save
-          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success"
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=success", allow_other_host: true
         else
-          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error"
+          redirect_to "#{ENV['FRONTEND_URL']}/clients/#{client_id}?integration=error", allow_other_host: true
         end
       end
 

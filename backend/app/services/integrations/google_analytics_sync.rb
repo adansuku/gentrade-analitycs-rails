@@ -29,6 +29,10 @@ module Integrations
         # Save metrics to database
         save_metrics(metrics_data, start_date, end_date)
 
+        # Fetch and persist behavioral breakdowns (no rompe el flujo si fallan)
+        save_breakdown_data("top_pages", fetch_top_pages(start_date, end_date))
+        save_breakdown_data("traffic_sources", fetch_traffic_sources(start_date, end_date))
+
         success_result(metrics_data)
       rescue Google::Apis::AuthorizationError => e
         @integration.update(status: :expired)
@@ -82,6 +86,174 @@ module Integrations
       []
     end
 
+    def fetch_top_pages(start_date, end_date, limit = 10)
+      property_id = @integration.metadata["property_id"]
+      return [] unless property_id
+
+      service = analytics_service
+
+      request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(
+        date_ranges: [
+          Google::Apis::AnalyticsdataV1beta::DateRange.new(start_date: start_date.to_s, end_date: end_date.to_s)
+        ],
+        dimensions: [
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'pagePath')
+        ],
+        metrics: [
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'screenPageViews'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'totalUsers'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'averageSessionDuration')
+        ],
+        order_bys: [
+          Google::Apis::AnalyticsdataV1beta::OrderBy.new(
+            metric: Google::Apis::AnalyticsdataV1beta::MetricOrderBy.new(metric_name: 'screenPageViews'),
+            desc: true
+          )
+        ],
+        limit: limit
+      )
+
+      response = service.run_property_report("properties/#{property_id}", request)
+
+      (response.rows || []).map do |row|
+        {
+          "page" => row.dimension_values[0].value,
+          "views" => row.metric_values[0].value.to_i,
+          "users" => row.metric_values[1].value.to_i,
+          "avg_duration" => row.metric_values[2].value.to_f
+        }
+      end
+    rescue => e
+      Rails.logger.warn "Top pages fetch failed: #{e.message}"
+      []
+    end
+
+    def fetch_traffic_sources(start_date, end_date, limit = 10)
+      property_id = @integration.metadata["property_id"]
+      return [] unless property_id
+
+      service = analytics_service
+
+      request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(
+        date_ranges: [
+          Google::Apis::AnalyticsdataV1beta::DateRange.new(start_date: start_date.to_s, end_date: end_date.to_s)
+        ],
+        dimensions: [
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'sessionSource'),
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'sessionMedium')
+        ],
+        metrics: [
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'sessions'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'totalUsers')
+        ],
+        order_bys: [
+          Google::Apis::AnalyticsdataV1beta::OrderBy.new(
+            metric: Google::Apis::AnalyticsdataV1beta::MetricOrderBy.new(metric_name: 'sessions'),
+            desc: true
+          )
+        ],
+        limit: limit
+      )
+
+      response = service.run_property_report("properties/#{property_id}", request)
+
+      (response.rows || []).map do |row|
+        {
+          "source" => row.dimension_values[0].value,
+          "medium" => row.dimension_values[1].value,
+          "sessions" => row.metric_values[0].value.to_i,
+          "users" => row.metric_values[1].value.to_i
+        }
+      end
+    rescue => e
+      Rails.logger.warn "Traffic sources fetch failed: #{e.message}"
+      []
+    end
+
+    def fetch_top_pages(start_date, end_date, limit = 10)
+      property_id = @integration.metadata["property_id"]
+      return [] unless property_id
+
+      service = analytics_service
+
+      request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(
+        date_ranges: [
+          Google::Apis::AnalyticsdataV1beta::DateRange.new(start_date: start_date.to_s, end_date: end_date.to_s)
+        ],
+        dimensions: [
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'pagePath')
+        ],
+        metrics: [
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'screenPageViews'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'totalUsers'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'averageSessionDuration')
+        ],
+        order_bys: [
+          Google::Apis::AnalyticsdataV1beta::OrderBy.new(
+            metric: Google::Apis::AnalyticsdataV1beta::MetricOrderBy.new(metric_name: 'screenPageViews'),
+            desc: true
+          )
+        ],
+        limit: limit
+      )
+
+      response = service.run_property_report("properties/#{property_id}", request)
+
+      (response.rows || []).map do |row|
+        {
+          "page" => row.dimension_values[0].value,
+          "views" => row.metric_values[0].value.to_i,
+          "users" => row.metric_values[1].value.to_i,
+          "avg_duration" => row.metric_values[2].value.to_f
+        }
+      end
+    rescue => e
+      Rails.logger.warn "Top pages fetch failed: #{e.message}"
+      []
+    end
+
+    def fetch_traffic_sources(start_date, end_date, limit = 10)
+      property_id = @integration.metadata["property_id"]
+      return [] unless property_id
+
+      service = analytics_service
+
+      request = Google::Apis::AnalyticsdataV1beta::RunReportRequest.new(
+        date_ranges: [
+          Google::Apis::AnalyticsdataV1beta::DateRange.new(start_date: start_date.to_s, end_date: end_date.to_s)
+        ],
+        dimensions: [
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'sessionSource'),
+          Google::Apis::AnalyticsdataV1beta::Dimension.new(name: 'sessionMedium')
+        ],
+        metrics: [
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'sessions'),
+          Google::Apis::AnalyticsdataV1beta::Metric.new(name: 'totalUsers')
+        ],
+        order_bys: [
+          Google::Apis::AnalyticsdataV1beta::OrderBy.new(
+            metric: Google::Apis::AnalyticsdataV1beta::MetricOrderBy.new(metric_name: 'sessions'),
+            desc: true
+          )
+        ],
+        limit: limit
+      )
+
+      response = service.run_property_report("properties/#{property_id}", request)
+
+      (response.rows || []).map do |row|
+        {
+          "source" => row.dimension_values[0].value,
+          "medium" => row.dimension_values[1].value,
+          "sessions" => row.metric_values[0].value.to_i,
+          "users" => row.metric_values[1].value.to_i
+        }
+      end
+    rescue => e
+      Rails.logger.warn "Traffic sources fetch failed: #{e.message}"
+      []
+    end
+
     def fetch_ecommerce_events(start_date, end_date)
       property_id = @integration.metadata["property_id"]
       return nil unless property_id
@@ -130,6 +302,19 @@ module Integrations
     end
 
     private
+
+    def save_breakdown_data(category, data)
+      return if data.blank?
+
+      IntegrationDatum.find_or_initialize_by(
+        integration_id: @integration.id,
+        category: category,
+        period: "current"
+      ).update!(
+        data: data,
+        fetched_at: Time.current
+      )
+    end
 
     def analytics_service
       service = Google::Apis::AnalyticsdataV1beta::AnalyticsDataService.new

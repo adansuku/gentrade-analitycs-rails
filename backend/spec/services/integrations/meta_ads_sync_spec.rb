@@ -53,6 +53,9 @@ RSpec.describe Integrations::MetaAdsSync do
         allow(graph_api).to receive(:get_connections)
           .with(anything, 'campaigns', anything)
           .and_return(campaigns_data)
+        allow(graph_api).to receive(:get_connections)
+          .with(anything, 'ads', anything)
+          .and_return([])
       end
 
       it 'fetches and saves metrics successfully' do
@@ -183,6 +186,67 @@ RSpec.describe Integrations::MetaAdsSync do
         expect(result[:success]).to be false
         expect(result[:error]).to include('Authentication failed')
       end
+    end
+  end
+
+  describe '#fetch_creatives' do
+    let(:graph_api) { instance_double(Koala::Facebook::API) }
+    let(:ads_data) do
+      [
+        {
+          'id' => 'ad_1',
+          'name' => 'Anuncio Verano',
+          'status' => 'ACTIVE',
+          'creative' => {
+            'title' => 'Rebajas de verano',
+            'body' => 'Hasta 50% de descuento',
+            'thumbnail_url' => 'https://example.com/thumb.jpg',
+            'effective_object_story_id' => '123_456'
+          }
+        },
+        {
+          'id' => 'ad_2',
+          'name' => 'Anuncio sin creative',
+          'status' => 'PAUSED'
+          # sin 'creative' → title/body/thumbnail_url deben ser nil
+        }
+      ]
+    end
+
+    before do
+      allow(graph_api).to receive(:get_connections)
+        .with('act_123456789', 'ads', hash_including(limit: 25))
+        .and_return(ads_data)
+    end
+
+    it 'mapea los anuncios a la estructura esperada' do
+      creatives = service.send(:fetch_creatives, graph_api, 'act_123456789')
+
+      expect(creatives.size).to eq(2)
+      expect(creatives.first).to eq(
+        'id' => 'ad_1',
+        'name' => 'Anuncio Verano',
+        'status' => 'ACTIVE',
+        'title' => 'Rebajas de verano',
+        'body' => 'Hasta 50% de descuento',
+        'thumbnail_url' => 'https://example.com/thumb.jpg'
+      )
+    end
+
+    it 'usa nil cuando faltan campos de creative' do
+      creatives = service.send(:fetch_creatives, graph_api, 'act_123456789')
+
+      expect(creatives.last).to include(
+        'id' => 'ad_2', 'title' => nil, 'body' => nil, 'thumbnail_url' => nil
+      )
+    end
+
+    it 'devuelve [] ante error de la API' do
+      allow(graph_api).to receive(:get_connections)
+        .with('act_123456789', 'ads', hash_including(limit: 25))
+        .and_raise(Koala::Facebook::APIError.new(400, 'boom'))
+
+      expect(service.send(:fetch_creatives, graph_api, 'act_123456789')).to eq([])
     end
   end
 end

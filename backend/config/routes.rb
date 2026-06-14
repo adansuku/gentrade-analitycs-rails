@@ -14,7 +14,11 @@ Rails.application.routes.draw do
   root to: redirect('/users/sign_in')
 
   # Web routes (HTML views)
-  resources :clients
+  resources :clients do
+    resources :materials, only: [:new, :create, :destroy] do
+      post 'upload', on: :collection
+    end
+  end
 
   # API routes
   namespace :api do
@@ -87,6 +91,7 @@ Rails.application.routes.draw do
       # Google OAuth
       get 'integrations/google/auth', to: 'integrations#google_auth'
       get 'integrations/google/callback', to: 'integrations#google_callback'
+      get 'integrations/:id/google/ads_accounts', to: 'integrations#google_ads_accounts'
 
       # Meta OAuth
       get 'integrations/meta/auth', to: 'integrations#meta_auth'

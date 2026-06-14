@@ -97,7 +97,7 @@ RSpec.describe Integrations::GoogleAdsSync do
     end
 
     context 'when integration is not active' do
-      before { integration.update(status: :inactive) }
+      before { integration.update(status: :revoked) }
 
       it 'returns an error' do
         result = service.call(start_date: start_date, end_date: end_date)
@@ -162,6 +162,48 @@ RSpec.describe Integrations::GoogleAdsSync do
         expect(result[:success]).to be false
         expect(result[:error]).to include('Authorization failed')
       end
+    end
+  end
+
+  describe '#list_accessible_customers' do
+    let(:google_ads_client) { instance_double(Google::Ads::GoogleAds::GoogleAdsClient) }
+
+    before do
+      allow(Google::Ads::GoogleAds::GoogleAdsClient).to receive(:new).and_return(google_ads_client)
+      allow(service).to receive(:fetch_accessible_customer_ids)
+        .with(google_ads_client).and_return(%w[1112223333 4445556666])
+      allow(service).to receive(:fetch_customer_info)
+        .with(google_ads_client, '1112223333')
+        .and_return({ 'id' => '1112223333', 'name' => 'Cuenta Uno', 'currency_code' => 'EUR', 'manager' => false })
+      allow(service).to receive(:fetch_customer_info)
+        .with(google_ads_client, '4445556666')
+        .and_return({ 'id' => '4445556666', 'name' => 'Cuenta Dos', 'currency_code' => 'USD', 'manager' => true })
+    end
+
+    it 'devuelve las cuentas accesibles con nombre, moneda y manager' do
+      accounts = service.list_accessible_customers
+
+      expect(accounts.size).to eq(2)
+      expect(accounts.first).to eq(
+        'id' => '1112223333', 'name' => 'Cuenta Uno', 'currency_code' => 'EUR', 'manager' => false
+      )
+      expect(accounts.last).to include('id' => '4445556666', 'manager' => true)
+    end
+
+    it 'hace fallback a { id, name: id } cuando la info por cuenta falla' do
+      allow(service).to receive(:fetch_customer_info)
+        .with(google_ads_client, '1112223333').and_return({ 'id' => '1112223333', 'name' => '1112223333' })
+      allow(service).to receive(:fetch_customer_info)
+        .with(google_ads_client, '4445556666').and_return({ 'id' => '4445556666', 'name' => '4445556666' })
+
+      accounts = service.list_accessible_customers
+      expect(accounts.first).to eq('id' => '1112223333', 'name' => '1112223333')
+    end
+
+    it 'devuelve error si falta developer_token' do
+      integration.update!(metadata: integration.metadata.except('developer_token'))
+      result = service.list_accessible_customers
+      expect(result).to eq([])
     end
   end
 end

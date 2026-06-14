@@ -24,11 +24,15 @@ module Integrations
 
         campaigns = fetch_campaigns_for_range(graph, ad_account_id, start_date, end_date)
         period_summary = build_period_summary(campaigns)
+        creatives = fetch_creatives(graph, ad_account_id)
 
         save_metrics_from_campaigns(campaigns, start_date, end_date)
         save_integration_data(campaigns, period_summary, start_date, end_date)
+        save_creatives(creatives)
 
-        success_result(period_summary.merge(campaigns_count: campaigns.size))
+        success_result(
+          period_summary.merge(campaigns_count: campaigns.size, creatives_count: creatives.size)
+        )
       rescue Koala::Facebook::AuthenticationError => e
         @integration.update(status: :expired)
         error_result("Authentication failed: #{e.message}")
@@ -107,6 +111,36 @@ module Integrations
     rescue Koala::Facebook::APIError => e
       Rails.logger.warn "Could not fetch Meta campaign metadata: #{e.message}"
       {}
+    end
+
+    def fetch_creatives(graph, ad_account_id)
+      ads = graph.get_connections(
+        ad_account_id,
+        'ads',
+        fields: 'name,status,creative{title,body,thumbnail_url,effective_object_story_id}',
+        limit: 25
+      )
+
+      (ads || []).map do |ad|
+        creative = ad['creative'] || {}
+        {
+          'id' => ad['id'],
+          'name' => ad['name'],
+          'status' => ad['status'],
+          'title' => creative['title'],
+          'body' => creative['body'],
+          'thumbnail_url' => creative['thumbnail_url']
+        }
+      end
+    rescue Koala::Facebook::APIError => e
+      Rails.logger.warn "Could not fetch Meta creatives: #{e.message}"
+      []
+    end
+
+    def save_creatives(creatives)
+      IntegrationDatum.find_or_initialize_by(
+        integration_id: @integration.id, category: 'creatives'
+      ).update!(data: creatives, fetched_at: Time.current)
     end
 
     def build_period_summary(campaigns)

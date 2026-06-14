@@ -15,17 +15,15 @@ module Integrations
       return error_result('Wrong provider') unless @integration.provider_google?
 
       begin
-        # Get customer ID from metadata (should be configured when integration is created)
-        customer_id = @integration.metadata['ads_customer_id']
-        return error_result('No ads_customer_id configured') unless customer_id
+        # Get customer ID and developer token from metadata (configured when integration is created)
+        customer_id = @integration.metadata['customer_id']
+        return error_result('No customer_id configured') unless customer_id
+
+        developer_token = @integration.metadata['developer_token']
+        return error_result('No developer_token configured') unless developer_token
 
         # Initialize Google Ads API client
-        google_ads_client = Google::Ads::GoogleAds::GoogleAdsClient.new do |config|
-          config.refresh_token = @integration.refresh_token
-          config.client_id = ENV['GOOGLE_CLIENT_ID']
-          config.client_secret = ENV['GOOGLE_CLIENT_SECRET']
-          config.developer_token = ENV['GOOGLE_ADS_DEVELOPER_TOKEN']
-        end
+        google_ads_client = build_google_ads_client(developer_token)
 
         # Fetch ads data
         metrics_data = fetch_ads_data(google_ads_client, customer_id, start_date, end_date)
@@ -41,7 +39,58 @@ module Integrations
       end
     end
 
+    # Lista las cuentas Google Ads accesibles con la credencial, para que el usuario
+    # elija cuál conectar al configurar la integración (paridad con el selector de
+    # cuentas del sistema original; NO realiza sync multi-cuenta).
+    def list_accessible_customers
+      developer_token = @integration.metadata['developer_token']
+      return [] unless developer_token
+
+      client = build_google_ads_client(developer_token)
+
+      fetch_accessible_customer_ids(client).map do |customer_id|
+        fetch_customer_info(client, customer_id)
+      end
+    rescue Google::Ads::GoogleAds::Errors::GoogleAdsError, StandardError => e
+      Rails.logger.warn "Google Ads list customers failed: #{e.message}"
+      []
+    end
+
     private
+
+    def build_google_ads_client(developer_token)
+      Google::Ads::GoogleAds::GoogleAdsClient.new do |config|
+        config.refresh_token = @integration.refresh_token
+        config.client_id = ENV['GOOGLE_CLIENT_ID']
+        config.client_secret = ENV['GOOGLE_CLIENT_SECRET']
+        config.developer_token = developer_token
+      end
+    end
+
+    # Devuelve los IDs de cuenta accesibles, normalizados (sin prefijo "customers/").
+    def fetch_accessible_customer_ids(client)
+      response = client.service.customer.list_accessible_customers
+      (response.resource_names || []).map { |rn| rn.to_s.sub('customers/', '') }
+    end
+
+    # Obtiene nombre/moneda/manager de una cuenta; fallback a { id, name: id } si falla.
+    def fetch_customer_info(client, customer_id)
+      rows = client.service.google_ads.search(
+        customer_id: customer_id.to_s,
+        query: 'SELECT customer.id, customer.descriptive_name, customer.currency_code, customer.manager FROM customer LIMIT 1'
+      )
+      row = rows.first
+      customer = row&.customer
+
+      {
+        'id' => customer_id.to_s,
+        'name' => customer&.descriptive_name.presence || customer_id.to_s,
+        'currency_code' => customer&.currency_code,
+        'manager' => customer&.manager || false
+      }
+    rescue StandardError
+      { 'id' => customer_id.to_s, 'name' => customer_id.to_s }
+    end
 
     def fetch_ads_data(client, customer_id, start_date, end_date)
       query = <<~QUERY
@@ -51,7 +100,6 @@ module Integrations
           metrics.clicks,
           metrics.cost_micros,
           metrics.conversions,
-          metrics.conversions_value,
           metrics.ctr,
           metrics.average_cpc
         FROM campaign
@@ -59,7 +107,7 @@ module Integrations
         AND campaign.status = 'ENABLED'
       QUERY
 
-      response = client.service.google_ads.search(
+      response = client.service.search(
         customer_id: customer_id.to_s,
         query: query,
         page_size: 10000
@@ -71,7 +119,7 @@ module Integrations
     def transform_ads_response(response)
       data_by_date = {}
 
-      response.each do |row|
+      response.results.each do |row|
         date_str = row.segments.date
         date = Date.parse(date_str)
 
@@ -81,7 +129,6 @@ module Integrations
           clicks: 0,
           cost: 0.0,
           conversions: 0.0,
-          conversion_value: 0.0,
           ctr: 0.0,
           avg_cpc: 0.0
         }
@@ -90,7 +137,6 @@ module Integrations
         data_by_date[date][:clicks] += row.metrics.clicks
         data_by_date[date][:cost] += (row.metrics.cost_micros / 1_000_000.0) # Convert micros to currency
         data_by_date[date][:conversions] += row.metrics.conversions
-        data_by_date[date][:conversion_value] += row.metrics.conversions_value
       end
 
       # Calculate averages
@@ -143,14 +189,17 @@ module Integrations
     end
 
     def handle_google_ads_error(error)
-      error_message = error.failure.errors.map(&:message).join(', ')
+      failure = error.failure
 
-      # Mark integration as error if authorization fails
-      if error_message.include?('AUTHENTICATION_ERROR') || error_message.include?('AUTHORIZATION_ERROR')
-        @integration.update(status: :error)
-      end
+      error_message = if failure.respond_to?(:errors)
+                         failure.errors.map(&:message).join(', ')
+                       else
+                         failure.to_s
+                       end
 
-      error_result("Google Ads API error: #{error_message}")
+      @integration.update(status: :expired)
+
+      error_result("Authorization failed: #{error_message}")
     end
 
     def success_result(data)
