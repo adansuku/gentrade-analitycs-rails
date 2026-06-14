@@ -36,6 +36,7 @@ Rails.application.routes.draw do
           post 'generate', on: :collection
         end
         resources :integrations, only: [:index, :create, :destroy]
+        post 'drive/import', to: 'drive#import'
         resources :metrics, only: [:index] do
           get 'summary', on: :collection
           post 'sync', on: :collection
@@ -92,6 +93,12 @@ Rails.application.routes.draw do
       get 'integrations/google/auth', to: 'integrations#google_auth'
       get 'integrations/google/callback', to: 'integrations#google_callback'
       get 'integrations/:id/google/ads_accounts', to: 'integrations#google_ads_accounts'
+
+      # Google Drive
+      get 'drive/status', to: 'drive#status'
+      get 'drive/auth', to: 'drive#auth'
+      get 'drive/callback', to: 'drive#callback'
+      get 'drive/files', to: 'drive#files'
 
       # Meta OAuth
       get 'integrations/meta/auth', to: 'integrations#meta_auth'

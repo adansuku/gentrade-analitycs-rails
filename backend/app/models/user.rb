@@ -26,4 +26,21 @@ class User < ApplicationRecord
   def can_manage?
     role_admin? || role_manager?
   end
+
+  # ── Google Drive ──────────────────────────────────────────────────────────
+
+  def google_drive_connected?
+    google_drive_token.present? || google_drive_refresh_token.present?
+  end
+
+  def google_drive_token_expired?
+    google_drive_token_expires_at.present? && google_drive_token_expires_at <= Time.current
+  end
+
+  def update_google_drive_tokens!(access_token:, refresh_token: nil, expires_at: nil)
+    attrs = { google_drive_token: access_token }
+    attrs[:google_drive_refresh_token] = refresh_token if refresh_token.present?
+    attrs[:google_drive_token_expires_at] = expires_at if expires_at
+    update!(attrs)
+  end
 end
