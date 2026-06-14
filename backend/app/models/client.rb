@@ -1,4 +1,7 @@
 class Client < ApplicationRecord
+  # Store extra attributes in JSONB metadata
+  store_accessor :metadata, :company, :phone, :notes
+
   # Associations
   has_many :materials, dependent: :destroy
   has_many :proposals, dependent: :destroy

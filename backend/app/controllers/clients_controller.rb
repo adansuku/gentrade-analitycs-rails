@@ -56,26 +56,25 @@ class ClientsController < ApplicationController
   end
 
   def load_clients
-    @clients = Client.active.includes(:proposals, :materials)
+    @clients = Client.active
 
     # Search functionality
     if params[:search].present?
       search_term = "%#{params[:search]}%"
       @clients = @clients.where(
-        "name ILIKE ? OR email ILIKE ? OR company ILIKE ?",
-        search_term, search_term, search_term
+        "name ILIKE ? OR email ILIKE ?",
+        search_term, search_term
       )
     end
-
-    @clients = @clients.order(created_at: :desc)
 
     # Add proposal count
     @clients = @clients.left_joins(:proposals)
                        .group('clients.id')
                        .select('clients.*, COUNT(proposals.id) as proposals_count')
+                       .order(created_at: :desc)
   end
 
   def client_params
-    params.require(:client).permit(:name, :email, :phone, :company, :industry, :notes)
+    params.require(:client).permit(:name, :email, :industry, :description, :company, :phone, :notes, metadata: {})
   end
 end

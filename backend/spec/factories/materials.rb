@@ -1,5 +1,5 @@
 FactoryBot.define do
-  factory :material do
+  factory :material, aliases: [:client_material] do
     client { nil }
     material_type { :note }
     content { "MyText" }

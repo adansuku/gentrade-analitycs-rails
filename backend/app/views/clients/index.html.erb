@@ -14,7 +14,7 @@
         Clientes
       </h1>
       <p style="color: rgba(255,255,255,0.65); font-size: 0.9375rem; margin-bottom: 28px; max-width: 480px;">
-        <%= @clients.count %> cliente<%= @clients.count != 1 ? 's' : '' %> en tu cartera comercial.
+        <%= @clients.size %> cliente<%= @clients.size != 1 ? 's' : '' %> en tu cartera comercial.
       </p>
       <%= link_to new_client_path, data: { turbo_frame: "modal" }, class: "inline-flex items-center gap-2 px-4 py-2 bg-white text-[#1b5e3b] rounded-lg font-semibold text-sm hover:bg-gray-50 transition-colors" do %>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
