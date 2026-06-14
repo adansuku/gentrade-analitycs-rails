@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :proposal_version do
     proposal { nil }
-    version_number { 1 }
+    sequence(:version_number) { |n| n }
     content { "MyText" }
   end
 end
