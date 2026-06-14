@@ -25,7 +25,7 @@ class Material < ApplicationRecord
     '.xls'  => :xlsx, '.xlsx' => :xlsx,
     '.csv'  => :csv,
     '.txt'  => :txt,
-    '.mp3'  => :audio, '.wav' => :audio, '.m4a' => :audio, '.ogg' => :audio,
+    '.mp3'  => :audio, '.wav' => :audio, '.m4a' => :audio, '.ogg' => :audio, '.webm' => :audio,
   }.freeze
 
   def self.type_from_filename(filename)

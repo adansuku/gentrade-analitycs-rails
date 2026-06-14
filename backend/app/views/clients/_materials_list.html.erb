@@ -1,4 +1,6 @@
-<div id="materials-list" data-controller="materials-filter">
+<div id="materials-list"
+     data-controller="materials-filter audio-recorder"
+     data-audio-recorder-upload-url-value="<%= upload_client_materials_path(client) %>">
   <%# ── Barra de acciones ──────────────────────────────────────────── %>
   <div class="flex flex-wrap gap-2 mb-4">
     <%# Subir archivo %>
@@ -25,6 +27,17 @@
              data-upload-url="<%= upload_client_materials_path(client) %>">
     </label>
 
+    <%# Grabar audio (toggle del grabador de abajo) %>
+    <button type="button"
+            data-action="audio-recorder#toggle"
+            data-audio-recorder-target="button"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+      </svg>
+      Grabar audio
+    </button>
+
     <%# Escribir nota %>
     <%= link_to new_client_material_path(client), data: { turbo_frame: "modal" },
         class: "inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm font-semibold hover:bg-amber-100 transition-colors" do %>
@@ -33,6 +46,21 @@
       </svg>
       Escribir nota
     <% end %>
+  </div>
+
+  <%# ── Grabador de audio (micrófono central) ──────────────────────────── %>
+  <div class="flex flex-col items-center gap-2 py-6 mb-4 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+    <button type="button"
+            data-action="audio-recorder#toggle"
+            data-audio-recorder-target="button"
+            aria-label="Grabar audio"
+            class="w-16 h-16 rounded-full bg-[#1b5e3b] text-white flex items-center justify-center shadow-lg hover:bg-[#2a7d54] transition-colors">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+      </svg>
+    </button>
+    <span data-audio-recorder-target="timer" class="text-sm font-mono text-gray-500 tabular-nums">00:00</span>
+    <span data-audio-recorder-target="status" class="text-sm text-gray-500">Pulsa para grabar una llamada o nota de voz</span>
   </div>
 
   <%# ── Progreso de subida ─────────────────────────────────────────── %>

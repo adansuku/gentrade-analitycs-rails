@@ -44,4 +44,27 @@ RSpec.describe Material, type: :model do
       expect(material.material_type_note?).to be false
     end
   end
+
+  describe '.type_from_filename' do
+    it 'detecta audios comunes' do
+      expect(Material.type_from_filename('a.mp3')).to eq(:audio)
+      expect(Material.type_from_filename('a.wav')).to eq(:audio)
+      expect(Material.type_from_filename('a.m4a')).to eq(:audio)
+    end
+
+    it 'detecta grabaciones del navegador (.webm/.ogg) como audio' do
+      expect(Material.type_from_filename('grabacion-123.webm')).to eq(:audio)
+      expect(Material.type_from_filename('grabacion-123.ogg')).to eq(:audio)
+    end
+
+    it 'detecta documentos por extensión' do
+      expect(Material.type_from_filename('doc.pdf')).to eq(:pdf)
+      expect(Material.type_from_filename('hoja.xlsx')).to eq(:xlsx)
+      expect(Material.type_from_filename('texto.txt')).to eq(:txt)
+    end
+
+    it 'cae en :other para extensiones desconocidas' do
+      expect(Material.type_from_filename('archivo.xyz')).to eq(:other)
+    end
+  end
 end
