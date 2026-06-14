@@ -69,6 +69,20 @@ RSpec.describe Material, type: :model do
     end
   end
 
+  describe '#embedding_status' do
+    let(:client) { create(:client) }
+
+    it 'lee el estado desde metadata' do
+      m = create(:material, client: client, content: 'x', metadata: { 'embedding_status' => 'done' })
+      expect(m.embedding_status).to eq('done')
+    end
+
+    it 'es nil si no se ha indexado' do
+      m = create(:material, client: client, content: 'x')
+      expect(m.embedding_status).to be_nil
+    end
+  end
+
   describe '.type_from_filename' do
     it 'detecta audios comunes' do
       expect(Material.type_from_filename('a.mp3')).to eq(:audio)

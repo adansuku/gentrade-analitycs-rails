@@ -16,10 +16,26 @@ class EmbeddingJob < ApplicationJob
     chunks = client.chunk_text(material.content)
     return if chunks.empty?
 
+    set_status(material, 'pending')
+
     client.upsert_chunks(
       client_id: material.client_id,
       material_id: material.id,
       chunks: chunks
     )
+
+    set_status(material, 'done')
+  rescue StandardError => e
+    set_status(material, 'failed') if material
+    raise e
+  end
+
+  private
+
+  # Guarda el estado del embedding en metadata sin disparar callbacks
+  # (update_column evita re-encolar el propio EmbeddingJob).
+  def set_status(material, status)
+    metadata = (material.metadata || {}).merge('embedding_status' => status)
+    material.update_column(:metadata, metadata)
   end
 end

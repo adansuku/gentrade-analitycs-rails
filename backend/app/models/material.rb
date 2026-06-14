@@ -46,6 +46,11 @@ class Material < ApplicationRecord
     file.attached? || file_url.present?
   end
 
+  # Estado del indexado vectorial (RAG): "pending" / "done" / "failed" / nil.
+  def embedding_status
+    metadata&.dig('embedding_status')
+  end
+
   # Transcripción vinculada a este audio (creada por TranscriptionJob con
   # metadata.source_material_id apuntando a este material).
   def transcript

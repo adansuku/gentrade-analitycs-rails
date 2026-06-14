@@ -62,6 +62,15 @@
       <% if defined?(badge) && badge %>
         <span class="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium"><%= badge %></span>
       <% end %>
+      <%# Estado de indexado RAG (embedding) %>
+      <% case material.embedding_status %>
+      <% when 'pending' %>
+        <span class="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-medium" title="Indexando para búsqueda semántica">Indexando…</span>
+      <% when 'done' %>
+        <span class="text-xs px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded font-medium" title="Disponible en búsqueda semántica">Indexado</span>
+      <% when 'failed' %>
+        <span class="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium" title="Falló el indexado">Indexado ✕</span>
+      <% end %>
       <% if material.file.attached? %>
         <span class="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">
           <%= number_to_human_size(material.metadata&.dig('size') || 0) %>

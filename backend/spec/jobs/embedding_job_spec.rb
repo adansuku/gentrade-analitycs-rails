@@ -31,4 +31,16 @@ RSpec.describe EmbeddingJob, type: :job do
     expect(embeddings_client).not_to receive(:upsert_chunks)
     EmbeddingJob.perform_now(empty.id)
   end
+
+  it 'marca el material como embedding done al terminar' do
+    EmbeddingJob.perform_now(material.id)
+    expect(material.reload.embedding_status).to eq('done')
+  end
+
+  it 'marca el material como embedding failed si falla' do
+    allow(embeddings_client).to receive(:upsert_chunks).and_raise(StandardError.new('Qdrant down'))
+    # retry_on captura la excepción para reintentar; el estado igual queda 'failed'.
+    EmbeddingJob.perform_now(material.id)
+    expect(material.reload.embedding_status).to eq('failed')
+  end
 end
