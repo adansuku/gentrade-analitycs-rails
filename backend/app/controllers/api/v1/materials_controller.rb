@@ -29,7 +29,7 @@ module Api
         end
 
         file = params[:file]
-        material_type = detect_material_type(file.original_filename)
+        material_type = Material.type_from_filename(file.original_filename)
 
         @material = @client.materials.create!(
           material_type: material_type,
@@ -41,6 +41,8 @@ module Api
             size: file.size
           }
         )
+
+        TranscriptionJob.perform_later(@material.id) if @material.material_type_audio?
 
         render json: { material: material_json(@material) }, status: :created
       rescue StandardError => e
@@ -82,19 +84,6 @@ module Api
           created_at: material.created_at.iso8601,
           updated_at: material.updated_at.iso8601
         }
-      end
-
-      def detect_material_type(filename)
-        extension = File.extname(filename).downcase.delete('.')
-        case extension
-        when 'pdf' then :pdf
-        when 'doc', 'docx' then :docx
-        when 'xls', 'xlsx' then :xlsx
-        when 'csv' then :csv
-        when 'txt' then :txt
-        when 'mp3', 'wav', 'm4a' then :audio
-        else :other
-        end
       end
 
       def extract_content(file)

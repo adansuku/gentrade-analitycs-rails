@@ -40,6 +40,9 @@ class MaterialsController < ApplicationController
     @material.file.attach(file)
 
     if @material.save
+      # Transcribe audios en background (Whisper) → crea material `transcript`.
+      TranscriptionJob.perform_later(@material.id) if @material.material_type_audio?
+
       @materials = reload_materials
       respond_to do |format|
         format.html { redirect_to client_path(@client), notice: 'Archivo subido correctamente.' }

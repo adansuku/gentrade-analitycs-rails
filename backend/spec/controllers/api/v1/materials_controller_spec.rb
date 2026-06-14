@@ -77,6 +77,25 @@ RSpec.describe Api::V1::MaterialsController, type: :controller do
       expect(response).to have_http_status(:bad_request)
       expect(JSON.parse(response.body)['error']).to eq('No file provided')
     end
+
+    it 'encola la transcripción al subir un audio' do
+      file = fixture_file_upload('spec/fixtures/files/sample.webm', 'audio/webm')
+
+      expect {
+        post :upload, params: { client_id: client.id, file: file }
+      }.to have_enqueued_job(TranscriptionJob)
+
+      expect(response).to have_http_status(:created)
+      expect(JSON.parse(response.body)['material']['material_type']).to eq('audio')
+    end
+
+    it 'no encola transcripción para archivos que no son audio' do
+      file = fixture_file_upload('spec/fixtures/files/sample.txt', 'text/plain')
+
+      expect {
+        post :upload, params: { client_id: client.id, file: file }
+      }.not_to have_enqueued_job(TranscriptionJob)
+    end
   end
 
   describe 'DELETE #destroy' do

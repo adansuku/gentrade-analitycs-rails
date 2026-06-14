@@ -40,7 +40,8 @@ module GentradeRails
     # API endpoints still work alongside web views
     config.api_only = false
 
-    # Active Job
-    config.active_job.queue_adapter = :sidekiq
+    # Active Job — Sidekiq en runtime; el entorno de test usa el adapter :test
+    # (configurado en config/environments/test.rb) para los matchers de ActiveJob.
+    config.active_job.queue_adapter = :sidekiq unless Rails.env.test?
   end
 end
