@@ -1,13 +1,8 @@
-.PHONY: help dev up down restart build logs shell console db-migrate db-rollback db-reset test lint setup prod prod-build prod-down prod-logs prod-shell clean
+.PHONY: help dev up down restart build logs shell console db-migrate db-rollback db-reset test lint setup clean
 
 BACKEND = backend
-FILES = -f docker-compose.yml
-DEV_FILES = $(FILES) -f docker-compose.dev.yml
-PROD_FILES = $(FILES) -f docker-compose.prod.yml
 COMPOSE = docker compose
-COMPOSE_DEV = $(COMPOSE) $(DEV_FILES)
-COMPOSE_PROD = $(COMPOSE) $(PROD_FILES)
-EXEC = $(COMPOSE_DEV) exec backend
+EXEC = $(COMPOSE) exec backend
 
 default: help
 
@@ -15,7 +10,7 @@ help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Development:"
-	@echo "  dev          Arrancar servicios (dev)"
+	@echo "  dev          Arrancar servicios"
 	@echo "  up           Igual que dev"
 	@echo "  down         Parar servicios"
 	@echo "  restart      Reiniciar servicios"
@@ -38,13 +33,6 @@ help:
 	@echo "  test         Ejecutar rspec"
 	@echo "  lint         Ejecutar rubocop"
 	@echo "  bundle       Instalar gems"
-	@echo ""
-	@echo "Production:"
-	@echo "  prod         Arrancar servicios (prod)"
-	@echo "  prod-build   Construir imagen production"
-	@echo "  prod-down    Parar servicios prod"
-	@echo "  prod-logs    Logs de prod"
-	@echo "  prod-shell   Shell en imagen production"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  clean        Parar y borrar volúmenes"
