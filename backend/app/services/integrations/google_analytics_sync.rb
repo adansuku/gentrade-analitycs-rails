@@ -67,7 +67,7 @@ module Integrations
         limit: 15
       )
 
-      response = service.run_property_report("properties/#{property_id}", run_report_request_object: request)
+      response = service.run_property_report("properties/#{property_id}", request)
 
       (response.rows || []).map do |row|
         {
@@ -108,7 +108,7 @@ module Integrations
         )
       )
 
-      response = service.run_property_report("properties/#{property_id}", run_report_request_object: request)
+      response = service.run_property_report("properties/#{property_id}", request)
 
       counts = { "view_item" => 0, "add_to_cart" => 0, "begin_checkout" => 0, "purchase" => 0 }
       (response.rows || []).each do |row|
@@ -157,7 +157,7 @@ module Integrations
         ]
       )
 
-      response = service.run_property_report("properties/#{property_id}", run_report_request_object: request)
+      response = service.run_property_report("properties/#{property_id}", request)
 
       # Transform response to hash
       transform_analytics_response(response)
