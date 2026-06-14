@@ -7,7 +7,7 @@ class DashboardController < ApplicationController
 
     # Calculate totals
     @totals = {
-      clients: @clients.count,
+      clients: Client.active.count,
       proposals: Proposal.count,
       materials: Material.count,
       proposals_this_month: Proposal.where('created_at >= ?', Time.current.beginning_of_month).count

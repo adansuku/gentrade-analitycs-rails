@@ -23,7 +23,7 @@ class ApplicationController < ActionController::Base
 
   def not_found
     respond_to do |format|
-      format.html { render file: "#{Rails.root}/public/404.html", status: :not_found, layout: false }
+      format.html { render plain: 'Not found', status: :not_found }
       format.json { render json: { error: 'Not found' }, status: :not_found }
     end
   end

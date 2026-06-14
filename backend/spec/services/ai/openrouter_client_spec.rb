@@ -17,7 +17,9 @@ RSpec.describe AI::OpenrouterClient do
     end
 
     it 'uses ENV variables as defaults' do
-      allow(ENV).to receive(:fetch).with('OPENROUTER_API_KEY').and_return('env-key')
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with('OPENROUTER_API_KEY').and_return('env-key')
+      allow(ENV).to receive(:fetch).and_call_original
       allow(ENV).to receive(:fetch).with('LLM_MODEL', 'anthropic/claude-3.5-sonnet').and_return('env-model')
 
       default_client = described_class.new

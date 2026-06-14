@@ -159,7 +159,7 @@ RSpec.describe IntegrationSyncJob, type: :job do
           :integration,
           client: client,
           provider: :google,
-          status: :inactive
+          status: :revoked
         )
       end
 

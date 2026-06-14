@@ -31,12 +31,12 @@ module AI
       end
 
       if response.code.to_i == 200
-        parsed = JSON.parse(response.body)
+        parsed = JSON.parse(response.body, symbolize_names: true)
         {
           success: true,
-          content: parsed.dig('choices', 0, 'message', 'content'),
-          usage: parsed['usage'],
-          model: parsed['model']
+          content: parsed.dig(:choices, 0, :message, :content),
+          usage: parsed[:usage],
+          model: parsed[:model]
         }
       else
         {

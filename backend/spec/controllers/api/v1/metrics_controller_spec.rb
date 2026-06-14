@@ -276,6 +276,8 @@ RSpec.describe Api::V1::MetricsController, type: :controller do
     end
 
     context 'when syncing all client integrations' do
+      let!(:active_integration) { integration }
+
       let!(:integration2) do
         create(
           :integration,
@@ -290,7 +292,7 @@ RSpec.describe Api::V1::MetricsController, type: :controller do
           :integration,
           client: client,
           provider: :slack,
-          status: :inactive
+          status: :revoked
         )
       end
 

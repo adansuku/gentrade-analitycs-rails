@@ -132,6 +132,7 @@ RSpec.describe SlackReportJob, type: :job do
     context 'when no channel is available' do
       before do
         integration.update(metadata: {})
+        allow(reporter).to receive(:send_daily_summary)
       end
 
       it 'logs an error and returns early' do
@@ -150,6 +151,7 @@ RSpec.describe SlackReportJob, type: :job do
     context 'when integration is not Slack' do
       before do
         integration.update(provider: :google)
+        allow(reporter).to receive(:send_daily_summary)
       end
 
       it 'logs an error and returns early' do

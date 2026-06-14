@@ -96,7 +96,7 @@ RSpec.describe Integrations::SlackMessenger do
     end
 
     context 'when integration is not active' do
-      before { integration.update(status: :inactive) }
+      before { integration.update(status: :revoked) }
 
       it 'returns an error' do
         result = messenger.send_message(channel: channel, text: 'Test')
@@ -139,7 +139,7 @@ RSpec.describe Integrations::SlackMessenger do
       it 'handles the Slack error' do
         result = messenger.send_message(channel: channel, text: 'Test')
         expect(result[:success]).to be false
-        expect(result[:error]).to include('channel_not_found')
+        expect(result[:error]).to include('Channel not found')
       end
     end
 
@@ -246,6 +246,7 @@ RSpec.describe Integrations::SlackMessenger do
 
       before do
         stub_request(:get, 'https://slack.com/api/conversations.list')
+          .with(query: hash_including(token: 'xoxb-test-token'))
           .to_return(status: 200, body: response_body)
       end
 
@@ -259,6 +260,7 @@ RSpec.describe Integrations::SlackMessenger do
     context 'when HTTP request fails' do
       before do
         stub_request(:get, 'https://slack.com/api/conversations.list')
+          .with(query: hash_including(token: 'xoxb-test-token'))
           .to_return(status: 500)
       end
 

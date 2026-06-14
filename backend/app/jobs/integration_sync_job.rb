@@ -5,7 +5,17 @@ class IntegrationSyncJob < ApplicationJob
   retry_on StandardError, wait: :polynomially_longer, attempts: 3
 
   def perform(integration_id, start_date: nil, end_date: nil)
-    integration = Integration.find(integration_id)
+    integration = Integration.find_by(id: integration_id)
+
+    unless integration
+      Rails.logger.error "IntegrationSyncJob: integration #{integration_id} not found"
+      return
+    end
+
+    unless integration.active?
+      Rails.logger.warn "IntegrationSyncJob: integration #{integration.id} is not active, skipping sync"
+      return
+    end
 
     # Default to last 7 days if not specified
     start_date ||= 7.days.ago.to_date
@@ -28,17 +38,17 @@ class IntegrationSyncJob < ApplicationJob
     if result[:success]
       integration.update(
         metadata: integration.metadata.merge(
-          last_sync_at: Time.current,
-          last_sync_result: 'success'
+          'last_sync_at' => Time.current,
+          'last_sync_status' => 'success'
         )
       )
       Rails.logger.info "Successfully synced integration #{integration.id}"
     else
       integration.update(
         metadata: integration.metadata.merge(
-          last_sync_at: Time.current,
-          last_sync_result: 'error',
-          last_sync_error: result[:error]
+          'last_sync_at' => Time.current,
+          'last_sync_status' => 'error',
+          'last_sync_error' => result[:error]
         )
       )
       Rails.logger.error "Failed to sync integration #{integration.id}: #{result[:error]}"
@@ -62,8 +72,8 @@ class IntegrationSyncJob < ApplicationJob
       results[:analytics] = analytics_result
     end
 
-    # Sync Google Ads if ads_customer_id is configured
-    if integration.metadata['ads_customer_id'].present?
+    # Sync Google Ads if customer_id is configured
+    if integration.metadata['customer_id'].present?
       ads_result = Integrations::GoogleAdsSync.new(integration).call(
         start_date: start_date,
         end_date: end_date

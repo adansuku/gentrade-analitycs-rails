@@ -3,6 +3,7 @@
 class SlackReportJob < ApplicationJob
   queue_as :default
   retry_on StandardError, wait: :polynomially_longer, attempts: 3
+  retry_on ActiveRecord::RecordNotFound, attempts: 1
 
   def perform(integration_id, report_type: 'daily_summary', channel: nil, **options)
     integration = Integration.find(integration_id)

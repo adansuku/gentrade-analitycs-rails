@@ -295,7 +295,7 @@ module Integrations
 
     def calculate_percentage_change(old_value, new_value)
       return 0 if old_value.zero?
-      ((new_value - old_value) / old_value * 100)
+      ((new_value - old_value).to_f / old_value * 100)
     end
 
     def format_date(date)
