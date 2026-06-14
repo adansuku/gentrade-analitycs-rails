@@ -38,26 +38,26 @@ help:
 	@echo "  clean        Parar y borrar volúmenes"
 
 dev:
-	$(COMPOSE_DEV) up -d
+	$(COMPOSE) up -d
 
 up:
-	$(COMPOSE_DEV) up -d
+	$(COMPOSE) up -d
 
 down:
-	$(COMPOSE_DEV) down
+	$(COMPOSE) down
 
 restart: down dev
 
 build:
-	$(COMPOSE_DEV) build backend
+	$(COMPOSE) build backend
 
 rebuild: build dev
 
 logs:
-	$(COMPOSE_DEV) logs -f
+	$(COMPOSE) logs -f
 
 logs-backend:
-	$(COMPOSE_DEV) logs -f backend
+	$(COMPOSE) logs -f backend
 
 shell:
 	$(EXEC) bash
@@ -91,24 +91,9 @@ bundle:
 
 setup:
 	$(COMPOSE) up -d postgres redis qdrant
-	$(COMPOSE_DEV) build backend
-	$(COMPOSE_DEV) up -d backend
+	$(COMPOSE) build backend
+	$(COMPOSE) up -d backend
 	$(EXEC) rails db:prepare
 
-prod:
-	$(COMPOSE_PROD) up -d --build
-
-prod-build:
-	docker build --target production -t gentrade_rails ./$(BACKEND)
-
-prod-down:
-	$(COMPOSE_PROD) down
-
-prod-logs:
-	$(COMPOSE_PROD) logs -f
-
-prod-shell:
-	docker run -it --rm --entrypoint /bin/bash gentrade_rails
-
 clean:
-	$(COMPOSE_DEV) down -v
+	$(COMPOSE) down -v
