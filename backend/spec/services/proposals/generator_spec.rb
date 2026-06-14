@@ -55,6 +55,47 @@ RSpec.describe Proposals::Generator do
       end
     end
 
+    context 'RAG: recuperación de contexto relevante' do
+      let(:ai_response) { { success: true, content: '# Propuesta', usage: {} } }
+      let(:embeddings) { instance_double(Embeddings::Client) }
+      let(:generator) { described_class.new(client, materials, ai_client: ai_client, embeddings_client: embeddings) }
+
+      before { allow(ai_client).to receive(:generate_completion).and_return(ai_response) }
+
+      it 'usa los fragmentos recuperados cuando RAG devuelve resultados' do
+        allow(embeddings).to receive(:search)
+          .with(a_string_including(client.name), client_id: client.id, top_k: 15)
+          .and_return([
+            { text: 'fragmento relevante uno', material_id: 1, score: 0.9 },
+            { text: 'fragmento relevante dos', material_id: 2, score: 0.8 }
+          ])
+
+        expect(ai_client).to receive(:generate_completion).with(
+          hash_including(prompt: include('fragmento relevante uno'))
+        ).and_return(ai_response)
+
+        result = generator.call
+        expect(result[:success]).to be true
+        expect(result[:used_rag]).to be true
+      end
+
+      it 'hace fallback a materiales completos si RAG no devuelve nada' do
+        allow(embeddings).to receive(:search).and_return([])
+
+        result = generator.call
+        expect(result[:success]).to be true
+        expect(result[:used_rag]).to be false
+      end
+
+      it 'hace fallback a materiales completos si RAG falla' do
+        allow(embeddings).to receive(:search).and_raise(StandardError.new('Qdrant down'))
+
+        result = generator.call
+        expect(result[:success]).to be true
+        expect(result[:used_rag]).to be false
+      end
+    end
+
     context 'when AI generation fails' do
       let(:ai_response) do
         {

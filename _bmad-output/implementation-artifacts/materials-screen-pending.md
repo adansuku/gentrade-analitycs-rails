@@ -22,7 +22,7 @@ Fecha: 2026-06-14.
 | ~~F2~~ | ~~Par audio + transcripción~~ **✅ HECHO 2026-06-14.** Vínculo preciso por `metadata.source_material_id`: la transcripción ya no aparece como fila suelta, el audio muestra badge "Transcrito" y su viewer muestra el texto transcrito. (`Material#transcript/#transcribed?/#source_audio`.) |
 | ~~F3~~ | ~~Badge "Transcrito" en vivo~~ **✅ HECHO 2026-06-14.** `TranscriptionJob` hace `broadcast_update_to` la lista (Turbo Stream); la vista se suscribe con `turbo_stream_from`. Cable dev cambiado a `redis` para propagar desde Sidekiq. Verificado en vivo sin recargar. |
 | F4 | **Badge de estado de embedding** (procesando/listo/fallido) por material | No migrado. | Guardar estado en `metadata` desde `EmbeddingJob` + mostrar en `_material_row`. |
-| F5 | **RAG en generación de propuestas** (backlog #10 de la investigación) | `Proposals::Generator` aún incluye TODO el contenido al prompt; no usa recuperación. | Usar `Embeddings::Client#search` en el generador para acotar contexto. |
+| ~~F5~~ | ~~RAG en generación de propuestas~~ **✅ HECHO 2026-06-14.** `Proposals::Generator` recupera fragmentos relevantes vía `Embeddings::Client#search` (query = nombre+industria+"propuesta comercial", top_k 15) y construye el prompt con ellos; fallback a materiales completos si RAG no devuelve nada o falla. `result[:used_rag]` indica el modo. Verificado end-to-end con OpenAI+Qdrant reales (used_rag: true). |
 
 ### Configuración / entorno (no es código)
 
