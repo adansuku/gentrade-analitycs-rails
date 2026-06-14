@@ -70,12 +70,16 @@ services:
       - backend_gems:/usr/local/bundle
     ports:
       - "3002:3002"
+    # Carga credenciales (OPENAI_API_KEY, GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI, etc.)
+    # desde backend/.env. Las variables de `environment:` de abajo tienen prioridad
+    # y fijan la conexión a los servicios del compose.
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gentrade_rails_development
       - REDIS_URL=redis://redis:6379/0
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION=materials
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - RAILS_ENV=development
       - RAILS_LOG_LEVEL=debug
     depends_on:

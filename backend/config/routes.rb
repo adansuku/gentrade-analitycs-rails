@@ -28,6 +28,10 @@ Rails.application.routes.draw do
     post 'auth/logout', to: 'auth#logout'
     get 'auth/me', to: 'auth#me'
 
+    # Google Drive OAuth callback fuera de v1 para casar con GOOGLE_REDIRECT_URI
+    # (http://localhost:3002/api/drive/callback), igual que el sistema original.
+    get 'drive/callback', to: 'v1/drive#callback'
+
     namespace :v1 do
       resources :clients do
         resources :materials, only: [:index, :create, :destroy] do

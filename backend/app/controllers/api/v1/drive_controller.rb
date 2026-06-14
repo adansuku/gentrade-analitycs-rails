@@ -15,30 +15,31 @@ module Api
       # GET /api/v1/drive/auth → URL de autorización de Google (scope Drive readonly)
       def auth
         scopes = 'https://www.googleapis.com/auth/drive.readonly'
-        params = {
+        oauth_params = {
           client_id: ENV['GOOGLE_CLIENT_ID'],
           redirect_uri: drive_redirect_uri,
           response_type: 'code',
           scope: scopes,
           access_type: 'offline',
           prompt: 'consent',
-          state: drive_state_token(current_user.id)
+          state: drive_state_token(current_user.id, params[:return_to])
         }
-        query = params.map { |k, v| "#{k}=#{CGI.escape(v.to_s)}" }.join('&')
+        query = oauth_params.map { |k, v| "#{k}=#{CGI.escape(v.to_s)}" }.join('&')
 
         render json: { auth_url: "https://accounts.google.com/o/oauth2/v2/auth?#{query}" }
       end
 
       # GET /api/v1/drive/callback → intercambia código y guarda tokens en el user
       def callback
-        user_id = decode_drive_state(params[:state])
-        return redirect_to_frontend(error: 'invalid_state') unless user_id
+        state = decode_drive_state(params[:state])
+        return_to = state['return_to']
+        return redirect_after(return_to, error: 'invalid_state') unless state['user_id']
 
-        user = User.find_by(id: user_id)
-        return redirect_to_frontend(error: 'user_not_found') unless user
+        user = User.find_by(id: state['user_id'])
+        return redirect_after(return_to, error: 'user_not_found') unless user
 
         tokens = exchange_drive_code(params[:code])
-        return redirect_to_frontend(error: tokens[:error]) if tokens[:error]
+        return redirect_after(return_to, error: tokens[:error]) if tokens[:error]
 
         user.update_google_drive_tokens!(
           access_token: tokens[:access_token],
@@ -46,7 +47,7 @@ module Api
           expires_at: tokens[:expires_at]
         )
 
-        redirect_to_frontend(drive: 'connected')
+        redirect_after(return_to, drive: 'connected')
       end
 
       # GET /api/v1/drive/files?folder_id=&query=&page_token=
@@ -84,18 +85,17 @@ module Api
         ENV['GOOGLE_REDIRECT_URI'] || "#{request.base_url}/api/v1/drive/callback"
       end
 
-      def drive_state_token(user_id)
-        payload = { user_id: user_id, exp: 10.minutes.from_now.to_i }
+      def drive_state_token(user_id, return_to = nil)
+        payload = { user_id: user_id, return_to: return_to, exp: 10.minutes.from_now.to_i }
         JWT.encode(payload, Rails.application.secret_key_base, 'HS256')
       end
 
       def decode_drive_state(token)
-        return nil if token.blank?
+        return {} if token.blank?
 
-        payload = JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first
-        payload['user_id']
+        JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256').first
       rescue JWT::DecodeError
-        nil
+        {}
       end
 
       def exchange_drive_code(code)
@@ -121,10 +121,13 @@ module Api
         { error: e.message }
       end
 
-      def redirect_to_frontend(params)
-        base = ENV['FRONTEND_URL'].presence || request.base_url
+      # Vuelve a la app (Rails). Respeta return_to solo si es una ruta interna
+      # (empieza por "/") para evitar open-redirects; si no, va a la raíz.
+      def redirect_after(return_to, params)
+        path = return_to.to_s.start_with?('/') ? return_to : '/'
+        separator = path.include?('?') ? '&' : '?'
         query = params.map { |k, v| "#{k}=#{CGI.escape(v.to_s)}" }.join('&')
-        redirect_to "#{base}?#{query}", allow_other_host: true
+        redirect_to "#{path}#{separator}#{query}", allow_other_host: false
       end
 
       def material_json(material)

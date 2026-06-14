@@ -28,7 +28,10 @@ export default class extends Controller {
   }
 
   async _connect() {
-    const data = await this._json(this.authUrlValue)
+    // Pasa la ruta actual para volver aquí tras conectar.
+    const returnTo = window.location.pathname + window.location.search
+    const url = `${this.authUrlValue}?return_to=${encodeURIComponent(returnTo)}`
+    const data = await this._json(url)
     if (data.auth_url) {
       window.location.href = data.auth_url
     } else {
