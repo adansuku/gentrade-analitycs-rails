@@ -19,7 +19,13 @@
      data-material-id="<%= material.id %>"
      data-material-title="<%= material.title.presence || material.material_type&.titleize %>"
      data-material-type-label="<%= mt&.titleize %>"
-     data-material-content="<%= material.content&.truncate(2000) %>">
+     data-material-content="<%= material.content&.truncate(5000) %>"
+     <% if material.file.attached? %>
+       data-material-file-url="<%= rails_blob_path(material.file, disposition: 'inline') %>"
+       data-material-file-mime="<%= material.file.content_type %>"
+     <% elsif material.file_url.present? %>
+       data-material-file-url="<%= material.file_url %>"
+     <% end %>>
 
   <%# Icono %>
   <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 <%= icon_bg[mt] || 'bg-gray-50' %> <%= icon_color[mt] || 'text-gray-500' %>">

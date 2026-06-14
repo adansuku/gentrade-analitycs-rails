@@ -118,14 +118,17 @@ export default class extends Controller {
     if (event.target.closest("form")) return
 
     const row = event.currentTarget
-    const title = row.dataset.materialTitle
-    const typeLabel = row.dataset.materialTypeLabel
-    const content = row.dataset.materialContent
-
-    this._renderViewer({ title, typeLabel, content })
+    this._renderViewer({
+      title: row.dataset.materialTitle,
+      type: row.dataset.materialType,
+      typeLabel: row.dataset.materialTypeLabel,
+      content: row.dataset.materialContent,
+      fileUrl: row.dataset.materialFileUrl,
+      fileMime: row.dataset.materialFileMime
+    })
   }
 
-  _renderViewer({ title, typeLabel, content }) {
+  _renderViewer({ title, type, typeLabel, content, fileUrl, fileMime }) {
     const existing = document.getElementById("material-viewer-overlay")
     if (existing) existing.remove()
 
@@ -146,10 +149,7 @@ export default class extends Controller {
           </button>
         </div>
         <div class="flex-1 overflow-auto px-6 py-4">
-          ${content
-            ? `<pre class="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">${this._escape(content)}</pre>`
-            : `<p class="text-sm text-gray-400 text-center py-8">Este material no tiene contenido de texto.</p>`
-          }
+          ${this._viewerBody({ type, content, fileUrl, fileMime })}
         </div>
       </div>
     `
@@ -164,6 +164,57 @@ export default class extends Controller {
     document.addEventListener("keydown", function closeOnEsc(e) {
       if (e.key === "Escape") { overlay.remove(); document.removeEventListener("keydown", closeOnEsc) }
     })
+  }
+
+  // Renderiza el cuerpo del viewer según el tipo de material.
+  _viewerBody({ type, content, fileUrl, fileMime }) {
+    const textBlock = content
+      ? `<pre class="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">${this._escape(content)}</pre>`
+      : ""
+
+    // Audio: reproductor + transcripción (si hay texto).
+    if (type === "audio") {
+      const player = fileUrl
+        ? `<audio controls preload="metadata" class="w-full mb-4"><source src="${this._escape(fileUrl)}"></audio>`
+        : `<p class="text-sm text-gray-400 mb-4">No hay archivo de audio disponible.</p>`
+      const transcript = content
+        ? `<div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Transcripción / contenido</div>${textBlock}`
+        : `<p class="text-sm text-gray-400">Sin transcripción todavía.</p>`
+      return player + transcript
+    }
+
+    // PDF: embed.
+    if (type === "pdf" && fileUrl) {
+      return `<iframe src="${this._escape(fileUrl)}" class="w-full h-[65vh] rounded-lg border border-gray-200"></iframe>`
+    }
+
+    // Imágenes.
+    if (fileMime && fileMime.startsWith("image/") && fileUrl) {
+      return `<img src="${this._escape(fileUrl)}" alt="" class="max-w-full mx-auto rounded-lg">`
+    }
+
+    // Texto / nota / transcript / email / csv: muestra el contenido extraído.
+    if (content) {
+      let body = textBlock
+      if (fileUrl) {
+        body += `<div class="mt-4"><a href="${this._escape(fileUrl)}" target="_blank" rel="noopener" class="text-sm text-[#1b5e3b] underline">Abrir archivo original</a></div>`
+      }
+      return body
+    }
+
+    // Sin texto pero con archivo (docx/xlsx binarios): enlace de descarga.
+    if (fileUrl) {
+      return `
+        <div class="text-center py-8">
+          <p class="text-sm text-gray-500 mb-4">Vista previa no disponible para este tipo de archivo.</p>
+          <a href="${this._escape(fileUrl)}" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 px-4 py-2 bg-[#1b5e3b] text-white rounded-lg text-sm font-semibold hover:bg-[#2a7d54] transition-colors">
+            Descargar / abrir archivo
+          </a>
+        </div>`
+    }
+
+    return `<p class="text-sm text-gray-400 text-center py-8">Este material no tiene contenido.</p>`
   }
 
   _escape(str) {
