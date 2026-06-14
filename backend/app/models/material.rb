@@ -46,6 +46,31 @@ class Material < ApplicationRecord
     file.attached? || file_url.present?
   end
 
+  # Transcripción vinculada a este audio (creada por TranscriptionJob con
+  # metadata.source_material_id apuntando a este material).
+  def transcript
+    return nil unless material_type_audio?
+
+    client.materials
+          .material_type_transcript
+          .where("metadata ->> 'source_material_id' = ?", id.to_s)
+          .first
+  end
+
+  def transcribed?
+    transcript.present?
+  end
+
+  # Audio origen de esta transcripción.
+  def source_audio
+    return nil unless material_type_transcript?
+
+    source_id = metadata&.dig('source_material_id')
+    return nil unless source_id
+
+    client.materials.find_by(id: source_id)
+  end
+
   private
 
   def enqueue_embedding

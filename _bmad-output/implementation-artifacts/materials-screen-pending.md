@@ -19,8 +19,8 @@ Fecha: 2026-06-14.
 | # | Pendiente | Causa / estado actual | Dónde se arregla |
 | - | --------- | --------------------- | ---------------- |
 | ~~F1~~ | ~~Click en material → ver/escuchar contenido real~~ **✅ HECHO 2026-06-14.** Viewer renderiza audio (player), PDF (iframe), imágenes, texto+link, descarga binarios. Pendiente menor dentro de esto: preview tabular de CSV/Excel (hoy CSV muestra texto; Excel → descarga). | — | — |
-| F2 | **Par audio + transcripción** (escuchar audio y ver su transcripción expandible, como el original). | Audio y transcript se muestran como filas separadas. | Vincular por `metadata.source_material_id` y renderizar expandible bajo el audio. |
-| F3 | **Badge "Transcrito" en vivo** | La transcripción crea el material en background, pero la lista no refresca sola (hay que recargar). | Turbo Stream desde `TranscriptionJob` (broadcast) o polling. |
+| ~~F2~~ | ~~Par audio + transcripción~~ **✅ HECHO 2026-06-14.** Vínculo preciso por `metadata.source_material_id`: la transcripción ya no aparece como fila suelta, el audio muestra badge "Transcrito" y su viewer muestra el texto transcrito. (`Material#transcript/#transcribed?/#source_audio`.) |
+| ~~F3~~ | ~~Badge "Transcrito" en vivo~~ **✅ HECHO 2026-06-14.** `TranscriptionJob` hace `broadcast_update_to` la lista (Turbo Stream); la vista se suscribe con `turbo_stream_from`. Cable dev cambiado a `redis` para propagar desde Sidekiq. Verificado en vivo sin recargar. |
 | F4 | **Badge de estado de embedding** (procesando/listo/fallido) por material | No migrado. | Guardar estado en `metadata` desde `EmbeddingJob` + mostrar en `_material_row`. |
 | F5 | **RAG en generación de propuestas** (backlog #10 de la investigación) | `Proposals::Generator` aún incluye TODO el contenido al prompt; no usa recuperación. | Usar `Embeddings::Client#search` en el generador para acotar contexto. |
 

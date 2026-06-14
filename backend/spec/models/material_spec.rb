@@ -45,6 +45,30 @@ RSpec.describe Material, type: :model do
     end
   end
 
+  describe 'audio ↔ transcripción' do
+    let(:client) { create(:client) }
+    let(:audio) { create(:material, client: client, material_type: :audio, content: 'Audio: x.webm') }
+
+    it '#transcript devuelve la transcripción vinculada por source_material_id' do
+      transcript = create(:material, client: client, material_type: :transcript,
+                                     content: 'texto', metadata: { 'source_material_id' => audio.id })
+
+      expect(audio.transcript).to eq(transcript)
+      expect(audio.transcribed?).to be true
+    end
+
+    it '#transcribed? es false si no hay transcripción' do
+      expect(audio.transcribed?).to be false
+      expect(audio.transcript).to be_nil
+    end
+
+    it '#source_audio devuelve el audio origen de una transcripción' do
+      transcript = create(:material, client: client, material_type: :transcript,
+                                     content: 'texto', metadata: { 'source_material_id' => audio.id })
+      expect(transcript.source_audio).to eq(audio)
+    end
+  end
+
   describe '.type_from_filename' do
     it 'detecta audios comunes' do
       expect(Material.type_from_filename('a.mp3')).to eq(:audio)

@@ -31,9 +31,24 @@ class TranscriptionJob < ApplicationJob
         'duration' => result[:duration]
       }
     )
+
+    broadcast_materials(audio.client)
   end
 
   private
+
+  # Refresca en vivo la lista de materiales del cliente (badge "Transcrito"
+  # y desaparición de la transcripción como fila suelta) sin recargar.
+  def broadcast_materials(client)
+    Turbo::StreamsChannel.broadcast_update_to(
+      client, "materials",
+      target: ActionView::RecordIdentifier.dom_id(client, :materials),
+      partial: "clients/materials_list",
+      locals: { client: client, materials: client.materials.order(created_at: :desc) }
+    )
+  rescue StandardError => e
+    Rails.logger.warn "Failed to broadcast materials update: #{e.message}"
+  end
 
   def transcript_exists?(audio)
     audio.client.materials

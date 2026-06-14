@@ -83,7 +83,12 @@
       <div class="p-6">
         <%# Materials Tab %>
         <div data-tabs-target="panel" data-tab-panel="materials">
-          <%= render "clients/materials_list", client: @client, materials: @materials %>
+          <%# Suscripción Turbo Stream: la lista se refresca en vivo cuando
+              termina la transcripción de un audio (TranscriptionJob). %>
+          <%= turbo_stream_from @client, "materials" %>
+          <div id="<%= dom_id(@client, :materials) %>">
+            <%= render "clients/materials_list", client: @client, materials: @materials %>
+          </div>
         </div>
 
         <%# Proposals Tab %>

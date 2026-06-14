@@ -177,14 +177,18 @@
           Audios y transcripciones
           <span class="bg-gray-100 rounded-full px-2 py-0.5 normal-case font-semibold text-gray-500"><%= audios.size + transcripts.size %></span>
         </div>
+        <%
+          # Vincula transcripciones a su audio por metadata.source_material_id (preciso).
+          transcripts_by_audio = transcripts.group_by { |t| t.metadata&.dig('source_material_id') }
+          linked_ids = transcripts_by_audio.keys.compact
+        %>
         <% audios.each do |audio| %>
-          <%
-            transcript = transcripts.find { |t| t.title&.include?(audio.title.to_s) || t.metadata&.dig('source') == 'audio' }
-          %>
-          <%= render 'clients/material_row', material: audio, client: client, badge: transcript ? 'Transcrito' : nil %>
+          <% transcript = (transcripts_by_audio[audio.id] || []).first %>
+          <%= render 'clients/material_row', material: audio, client: client,
+              badge: transcript ? 'Transcrito' : nil, transcript: transcript %>
         <% end %>
-        <%# Transcripciones huérfanas %>
-        <% transcripts.reject { |t| audios.any? { |a| t.title&.include?(a.title.to_s) } }.each do |t| %>
+        <%# Transcripciones sin audio asociado (importadas sueltas, etc.) %>
+        <% transcripts.reject { |t| linked_ids.include?(t.metadata&.dig('source_material_id')) && audios.any? { |a| a.id == t.metadata&.dig('source_material_id') } }.each do |t| %>
           <%= render 'clients/material_row', material: t, client: client %>
         <% end %>
       </div>

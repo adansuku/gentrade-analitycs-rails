@@ -16,10 +16,19 @@
 <div class="group flex items-center gap-3 px-3 py-2.5 rounded-lg border border-transparent hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
      data-material-type="<%= mt %>"
      data-action="click->materials-filter#openViewer"
+     <%
+       # Para audios con transcripción, el viewer muestra el texto transcrito;
+       # si no, el contenido propio del material.
+       viewer_content = if defined?(transcript) && transcript&.content.present?
+                          transcript.content
+                        else
+                          material.content
+                        end
+     %>
      data-material-id="<%= material.id %>"
      data-material-title="<%= material.title.presence || material.material_type&.titleize %>"
      data-material-type-label="<%= mt&.titleize %>"
-     data-material-content="<%= material.content&.truncate(5000) %>"
+     data-material-content="<%= viewer_content&.truncate(5000) %>"
      <% if material.file.attached? %>
        data-material-file-url="<%= rails_blob_path(material.file, disposition: 'inline') %>"
        data-material-file-mime="<%= material.file.content_type %>"
